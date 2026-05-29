@@ -10,6 +10,7 @@ import {
 } from "../shared/recipe";
 import {
   FALLBACK_IMAGE_MODEL,
+  FALLBACK_VERTEX_MODEL,
   FIXED_IMAGE_MODEL,
   FIXED_VERTEX_MODEL,
   VERTEX_API_KEY_ENV,
@@ -184,19 +185,39 @@ export async function generateRecipeWithGemini(
   const ai = new GoogleGenAI({ apiKey });
   const contents = buildPrompt(payload);
 
-  let response: Awaited<ReturnType<typeof generateContent>>;
-
   try {
-    response = await generateContent(ai, FIXED_VERTEX_MODEL, contents, 0.85, recipeJsonSchema, true);
+    const response = await generateRecipeContentWithModel(ai, FIXED_VERTEX_MODEL, contents);
+    return parseStructuredRecipe(extractResponseText(response));
+  } catch (error) {
+    if (!shouldTryFallbackTextModel(error)) {
+      throw error;
+    }
+
+    console.warn("BokekLab recipe model fallback activated", {
+      from: FIXED_VERTEX_MODEL,
+      to: FALLBACK_VERTEX_MODEL,
+      reason: error instanceof Error ? error.message : String(error),
+    });
+
+    const response = await generateRecipeContentWithModel(ai, FALLBACK_VERTEX_MODEL, contents);
+    return parseStructuredRecipe(extractResponseText(response));
+  }
+}
+
+async function generateRecipeContentWithModel(
+  ai: GoogleGenAI,
+  model: string,
+  contents: unknown,
+) {
+  try {
+    return await generateContent(ai, model, contents, 0.85, recipeJsonSchema, true);
   } catch (error) {
     if (!isGroundingUnsupportedError(error)) {
       throw error;
     }
 
-    response = await generateContent(ai, FIXED_VERTEX_MODEL, contents, 0.85, recipeJsonSchema);
+    return generateContent(ai, model, contents, 0.85, recipeJsonSchema);
   }
-
-  return parseStructuredRecipe(extractResponseText(response));
 }
 
 export async function generateRecipeImageWithGemini(
@@ -265,6 +286,12 @@ function isGroundingUnsupportedError(error: unknown) {
   const message = error instanceof Error ? error.message : String(error);
 
   return /google\s*search|googlesearch|grounding|tool/i.test(message);
+}
+
+function shouldTryFallbackTextModel(error: unknown) {
+  const message = error instanceof Error ? error.message : String(error);
+
+  return /model|not\s*found|not\s*supported|unsupported|unavailable|permission|region|404|400/i.test(message);
 }
 
 export async function analyzeIngredientsWithGemini(

@@ -253,6 +253,8 @@ app.post("/api/ingredients/analyze-input", requireAuth, requireAiEnabled, async 
 });
 
 app.post("/api/recipes/generate", requireAuth, requireAiEnabled, async (req, res, next) => {
+  let phase = "validate_request";
+
   try {
     const parsed = generateRecipeRequestSchema.safeParse(req.body);
 
@@ -267,10 +269,12 @@ app.post("/api/recipes/generate", requireAuth, requireAiEnabled, async (req, res
       return;
     }
 
+    phase = "reserve_quota";
     await reserveDailyUsage(req.user!.uid, "recipeGenerations", RECIPE_DAILY_LIMIT);
 
     try {
       const recipeId = randomUUID();
+      phase = "generate_recipe";
       const generatedRecipe = await generateRecipeWithGemini(parsed.data);
       let recipe: RecipeResponse = {
         ...generatedRecipe,
@@ -279,7 +283,9 @@ app.post("/api/recipes/generate", requireAuth, requireAiEnabled, async (req, res
       };
 
       try {
+        phase = "generate_image";
         const image = await generateRecipeImageWithGemini(generatedRecipe);
+        phase = "upload_image";
         const uploaded = await uploadRecipeImage(req.user!.uid, recipeId, image.imageBytes, image.mimeType);
         recipe = {
           ...generatedRecipe,
@@ -291,15 +297,18 @@ app.post("/api/recipes/generate", requireAuth, requireAiEnabled, async (req, res
           imageGeneratedAt: new Date().toISOString(),
         };
       } catch (imageError) {
+        logApiFailure("Recipe image generation/storage failed; saving recipe without image.", imageError, {
+          phase,
+          recipeId,
+          uid: req.user!.uid,
+        });
         recipe = {
           ...recipe,
-          imageError:
-            imageError instanceof Error
-              ? imageError.message
-              : "Image generation failed before the image could be stored.",
+          imageError: summarizeError(imageError, "Image generation failed before the image could be stored."),
         };
       }
 
+      phase = "save_recipe";
       const savedRecipe = await saveRecipe(req.user!.uid, {
         id: recipeId,
         createdAt: new Date().toISOString(),
@@ -311,12 +320,31 @@ app.post("/api/recipes/generate", requireAuth, requireAiEnabled, async (req, res
       res.json(savedRecipe);
     } catch (error) {
       await refundDailyUsage(req.user!.uid, "recipeGenerations");
+      logApiFailure("Recipe generation request failed.", error, {
+        phase,
+        uid: req.user!.uid,
+      });
       throw error;
     }
   } catch (error) {
     next(error);
   }
 });
+
+function summarizeError(error: unknown, fallback: string) {
+  const message = error instanceof Error ? error.message : String(error || fallback);
+  return message.length > 280 ? `${message.slice(0, 277)}...` : message;
+}
+
+function logApiFailure(message: string, error: unknown, context: Record<string, unknown>) {
+  const errorLike = error as { code?: unknown; statusCode?: unknown; status?: unknown };
+  console.error(message, {
+    ...context,
+    code: errorLike?.code,
+    statusCode: errorLike?.statusCode ?? errorLike?.status,
+    error: summarizeError(error, "Unknown server error."),
+  });
+}
 
 function requireAiEnabled(_req: express.Request, res: express.Response, next: express.NextFunction) {
   if (AI_FEATURES_ENABLED) {
