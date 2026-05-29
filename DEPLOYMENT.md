@@ -57,6 +57,9 @@ gcloud run deploy bokeklab \
 - Firestore and Storage rules deny direct client writes; app writes go through Cloud Run.
 - Cloud Run serves HTTPS only through Google-managed endpoint or a verified custom domain.
 - `AI_FEATURES_ENABLED=false` works as an emergency kill switch.
+- `BOKEKLAB_AUTH_REQUIRED=true` is set in production; the service fails closed if Firebase public config is incomplete.
+- `VERTEX_API_KEY` is mounted from Secret Manager; the service fails closed when AI is enabled without it.
+- API responses are `Cache-Control: no-store`, mutating API routes require `Content-Type: application/json`, and Helmet CSP/security headers are enabled.
 - API errors are structured and do not expose stack traces in production.
 - `npm.cmd audit --json` is reviewed before release.
 

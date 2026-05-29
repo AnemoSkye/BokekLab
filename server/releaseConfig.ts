@@ -1,4 +1,5 @@
 import type { AppConfigResponse, FirebasePublicConfig } from "../shared/recipe";
+import { VERTEX_API_KEY_ENV } from "../shared/geminiConfig";
 
 export const APP_VERSION = process.env.BOKEKLAB_APP_VERSION || "1.0.0";
 export const RECIPE_DAILY_LIMIT = Number(process.env.RECIPE_DAILY_LIMIT || 10);
@@ -38,6 +39,20 @@ export function buildPublicConfig(): AppConfigResponse {
     aiFeaturesEnabled: AI_FEATURES_ENABLED,
     recipeDailyLimit: RECIPE_DAILY_LIMIT,
   };
+}
+
+export function assertProductionReleaseConfig(isProduction: boolean) {
+  if (!isProduction) {
+    return;
+  }
+
+  if (AUTH_REQUIRED && !readFirebasePublicConfig()) {
+    throw new Error("Production auth is enabled, but Firebase public config is incomplete.");
+  }
+
+  if (AI_FEATURES_ENABLED && !process.env[VERTEX_API_KEY_ENV]) {
+    throw new Error(`Production AI is enabled, but ${VERTEX_API_KEY_ENV} is not configured.`);
+  }
 }
 
 export function getJakartaDateKey(date = new Date()) {

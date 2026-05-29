@@ -39,6 +39,7 @@ import {
   IMAGE_PROMPT_VERSION,
   INGREDIENT_DAILY_LIMIT,
   RECIPE_DAILY_LIMIT,
+  assertProductionReleaseConfig,
   buildPublicConfig,
 } from "./releaseConfig";
 
@@ -51,13 +52,44 @@ const port = Number(process.env.PORT || 5173);
 const isProduction = process.env.NODE_ENV === "production" || process.argv.includes("--preview");
 const unauthenticatedBursts = new Map<string, { count: number; resetAt: number }>();
 
+assertProductionReleaseConfig(isProduction);
 app.disable("x-powered-by");
+app.set("trust proxy", 1);
 app.use(
   helmet({
-    contentSecurityPolicy: false,
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        baseUri: ["'self'"],
+        objectSrc: ["'none'"],
+        scriptSrc: ["'self'"],
+        styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+        fontSrc: ["'self'", "https://fonts.gstatic.com", "data:"],
+        imgSrc: [
+          "'self'",
+          "data:",
+          "blob:",
+          "https://storage.googleapis.com",
+          "https://firebasestorage.googleapis.com",
+        ],
+        connectSrc: [
+          "'self'",
+          "https://identitytoolkit.googleapis.com",
+          "https://securetoken.googleapis.com",
+          "https://firestore.googleapis.com",
+          "https://firebasestorage.googleapis.com",
+          "https://www.googleapis.com",
+        ],
+        frameSrc: ["'self'", "https://accounts.google.com", "https://*.firebaseapp.com"],
+        formAction: ["'self'"],
+        ...(isProduction ? { upgradeInsecureRequests: [] } : {}),
+      },
+    },
     crossOriginEmbedderPolicy: false,
   }),
 );
+app.use("/api", noStoreApiResponses);
+app.use("/api", requireJsonApiBody);
 app.use(express.json({ limit: "12mb" }));
 
 app.get("/api/config", basicBurstLimit, (_req, res) => {
@@ -291,6 +323,25 @@ function requireAiEnabled(_req: express.Request, res: express.Response, next: ex
       message: "Fitur AI BokekLab sedang dimatikan sementara oleh admin.",
     },
   });
+}
+
+function noStoreApiResponses(_req: express.Request, res: express.Response, next: express.NextFunction) {
+  res.setHeader("Cache-Control", "no-store");
+  next();
+}
+
+function requireJsonApiBody(req: express.Request, res: express.Response, next: express.NextFunction) {
+  if (["POST", "PATCH", "PUT"].includes(req.method) && !req.is("application/json")) {
+    res.status(415).json({
+      error: {
+        code: "unsupported_media_type",
+        message: "Gunakan Content-Type application/json untuk request API BokekLab.",
+      },
+    });
+    return;
+  }
+
+  next();
 }
 
 function basicBurstLimit(req: express.Request, res: express.Response, next: express.NextFunction) {
