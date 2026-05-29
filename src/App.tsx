@@ -86,6 +86,7 @@ import {
 } from "./lib/api";
 import { formatCompactDate, formatRupiah } from "./lib/format";
 import {
+  completeGoogleRedirect,
   firebaseAuthErrorMessage,
   listenForAuth,
   resetPassword,
@@ -325,6 +326,9 @@ export function App() {
     }
 
     setAuthStatus("loading");
+    void completeGoogleRedirect(appConfig.firebase).catch((redirectError) => {
+      setAuthError(firebaseAuthErrorMessage(redirectError));
+    });
     const unsubscribe = listenForAuth(appConfig.firebase, (user) => {
       setAuthUser(
         user

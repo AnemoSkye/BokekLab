@@ -4,11 +4,12 @@ import {
   browserLocalPersistence,
   createUserWithEmailAndPassword,
   getAuth,
+  getRedirectResult,
   onAuthStateChanged,
   sendPasswordResetEmail,
   setPersistence,
   signInWithEmailAndPassword,
-  signInWithPopup,
+  signInWithRedirect,
   signOut,
   type User,
 } from "firebase/auth";
@@ -29,12 +30,16 @@ export function listenForAuth(config: FirebasePublicConfig, callback: (user: Use
   return onAuthStateChanged(initializeFirebaseClient(config), callback);
 }
 
+export async function completeGoogleRedirect(config: FirebasePublicConfig) {
+  await getRedirectResult(initializeFirebaseClient(config));
+}
+
 export async function signInWithGoogle(config: FirebasePublicConfig) {
   const auth = initializeFirebaseClient(config);
   const provider = new GoogleAuthProvider();
   provider.setCustomParameters({ prompt: "select_account" });
 
-  return signInWithPopup(auth, provider);
+  return signInWithRedirect(auth, provider);
 }
 
 export async function signInWithEmail(config: FirebasePublicConfig, email: string, password: string) {
@@ -65,9 +70,10 @@ export function firebaseAuthErrorMessage(error: unknown) {
   switch (code) {
     case "auth/popup-closed-by-user":
     case "auth/cancelled-popup-request":
-      return "Google login did not finish. Please try again and keep the Google window open until it returns to BokekLab.";
+    case "auth/redirect-cancelled-by-user":
+      return "Google login did not finish. Please try again and complete the Google account step until it returns to BokekLab.";
     case "auth/popup-blocked":
-      return "Your browser blocked the Google login popup. Please allow popups for BokekLab or use email login.";
+      return "Your browser blocked Google login. Please allow popups/redirects for BokekLab or use email login.";
     case "auth/unauthorized-domain":
       return "This website domain is not allowed in Firebase yet. Add your Cloud Run domain in Firebase Authentication > Authorized domains.";
     case "auth/invalid-email":
