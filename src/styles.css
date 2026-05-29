@@ -723,6 +723,15 @@ button:disabled {
   box-shadow: 0 18px 36px rgba(147, 51, 234, 0.24);
 }
 
+.google-mark {
+  width: 21px;
+  height: 21px;
+  flex: 0 0 auto;
+  padding: 2px;
+  border-radius: 999px;
+  background: #fff;
+}
+
 .auth-divider {
   display: flex;
   align-items: center;
