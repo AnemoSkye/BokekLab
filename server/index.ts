@@ -54,6 +54,7 @@ const unauthenticatedBursts = new Map<string, { count: number; resetAt: number }
 assertProductionReleaseConfig(isProduction);
 app.disable("x-powered-by");
 app.set("trust proxy", 1);
+app.use("/__/auth", proxyFirebaseAuthHandler);
 app.use(
   helmet({
     contentSecurityPolicy: {
@@ -98,8 +99,8 @@ app.use("/api", noStoreApiResponses);
 app.use("/api", requireJsonApiBody);
 app.use(express.json({ limit: "12mb" }));
 
-app.get("/api/config", basicBurstLimit, (_req, res) => {
-  res.json(buildPublicConfig());
+app.get("/api/config", basicBurstLimit, (req, res) => {
+  res.json(buildPublicConfig(req.get("host")));
 });
 
 app.get("/api/me", requireAuth, (req, res) => {
@@ -348,6 +349,51 @@ function requireJsonApiBody(req: express.Request, res: express.Response, next: e
   }
 
   next();
+}
+
+async function proxyFirebaseAuthHandler(req: express.Request, res: express.Response, next: express.NextFunction) {
+  try {
+    const targetDomain =
+      process.env.FIREBASE_AUTH_HANDLER_DOMAIN ||
+      process.env.FIREBASE_AUTH_DOMAIN ||
+      (process.env.FIREBASE_PROJECT_ID ? `${process.env.FIREBASE_PROJECT_ID}.firebaseapp.com` : "");
+
+    if (!targetDomain) {
+      res.status(503).send("Firebase auth handler is not configured.");
+      return;
+    }
+
+    const targetUrl = new URL(req.originalUrl, `https://${targetDomain}`);
+    const headers = new Headers();
+
+    for (const [name, value] of Object.entries(req.headers)) {
+      if (!value || ["host", "content-length"].includes(name.toLowerCase())) {
+        continue;
+      }
+
+      headers.set(name, Array.isArray(value) ? value.join(",") : value);
+    }
+
+    const upstream = await fetch(targetUrl, {
+      method: req.method,
+      headers,
+      body: ["GET", "HEAD"].includes(req.method) ? undefined : JSON.stringify(req.body ?? {}),
+      redirect: "manual",
+    });
+
+    res.status(upstream.status);
+    upstream.headers.forEach((value, name) => {
+      if (["content-encoding", "content-length", "transfer-encoding"].includes(name.toLowerCase())) {
+        return;
+      }
+
+      res.setHeader(name, value);
+    });
+    res.setHeader("Cache-Control", "no-store");
+    res.send(Buffer.from(await upstream.arrayBuffer()));
+  } catch (error) {
+    next(error);
+  }
 }
 
 function basicBurstLimit(req: express.Request, res: express.Response, next: express.NextFunction) {

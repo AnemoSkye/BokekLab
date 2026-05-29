@@ -8,6 +8,7 @@ export const AI_FEATURES_ENABLED = process.env.AI_FEATURES_ENABLED !== "false";
 const explicitAuthRequired = process.env.BOKEKLAB_AUTH_REQUIRED;
 export const AUTH_REQUIRED =
   explicitAuthRequired === undefined ? process.env.NODE_ENV === "production" : explicitAuthRequired !== "false";
+export const FIREBASE_AUTH_PROXY_ENABLED = process.env.FIREBASE_AUTH_PROXY_ENABLED !== "false";
 export const IMAGE_PROMPT_VERSION = "bokeklab-food-image-v1";
 
 export function readFirebasePublicConfig(): FirebasePublicConfig | null {
@@ -31,11 +32,17 @@ export function readFirebasePublicConfig(): FirebasePublicConfig | null {
   };
 }
 
-export function buildPublicConfig(): AppConfigResponse {
+export function buildPublicConfig(host?: string): AppConfigResponse {
+  const firebase = readFirebasePublicConfig();
+
+  if (firebase && host && FIREBASE_AUTH_PROXY_ENABLED) {
+    firebase.authDomain = host;
+  }
+
   return {
     appVersion: APP_VERSION,
     authRequired: AUTH_REQUIRED,
-    firebase: readFirebasePublicConfig(),
+    firebase,
     aiFeaturesEnabled: AI_FEATURES_ENABLED,
     recipeDailyLimit: RECIPE_DAILY_LIMIT,
   };

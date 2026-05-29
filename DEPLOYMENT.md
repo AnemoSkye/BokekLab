@@ -27,9 +27,12 @@ FIREBASE_APP_ID=...
 FIREBASE_STORAGE_BUCKET=...
 FIREBASE_MESSAGING_SENDER_ID=...
 FIREBASE_MEASUREMENT_ID=...
+FIREBASE_AUTH_PROXY_ENABLED=true
 ```
 
 Mount `VERTEX_API_KEY` from Secret Manager instead of storing it in source or a client-visible config.
+For Cloud Run, BokekLab proxies Firebase Auth handler requests at `/__/auth/*` and returns the Cloud Run host as Firebase `authDomain`.
+Keep `FIREBASE_AUTH_DOMAIN` set to your Firebase domain, such as `PROJECT_ID.firebaseapp.com`, and add the Cloud Run domain to Firebase Authentication authorized domains.
 
 ## Build And Deploy
 ```bash
@@ -58,6 +61,7 @@ gcloud run deploy bokeklab \
 - Cloud Run serves HTTPS only through Google-managed endpoint or a verified custom domain.
 - `AI_FEATURES_ENABLED=false` works as an emergency kill switch.
 - `BOKEKLAB_AUTH_REQUIRED=true` is set in production; the service fails closed if Firebase public config is incomplete.
+- Firebase Auth redirect runs through the same Cloud Run domain via `/__/auth/*` to avoid cross-origin redirect/iframe failures.
 - `VERTEX_API_KEY` is mounted from Secret Manager; the service fails closed when AI is enabled without it.
 - API responses are `Cache-Control: no-store`, mutating API routes require `Content-Type: application/json`, and Helmet CSP/security headers are enabled.
 - API errors are structured and do not expose stack traces in production.
