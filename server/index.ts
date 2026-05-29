@@ -12,7 +12,6 @@ import {
   ingredientPhotoRequestSchema,
   recipePatchRequestSchema,
 } from "../shared/recipe";
-import { FIXED_IMAGE_MODEL } from "../shared/geminiConfig";
 import { requireAuth } from "./auth";
 import { loadLocalEnv } from "./env";
 import {
@@ -279,7 +278,7 @@ app.post("/api/recipes/generate", requireAuth, requireAiEnabled, async (req, res
           imageStatus: "ready" as const,
           imageUrl: uploaded.imageUrl,
           imageStoragePath: uploaded.imageStoragePath,
-          imageModel: process.env.GEMINI_IMAGE_MODEL || FIXED_IMAGE_MODEL,
+          imageModel: image.model,
           imagePromptVersion: IMAGE_PROMPT_VERSION,
           imageGeneratedAt: new Date().toISOString(),
         };

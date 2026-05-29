@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { FIXED_IMAGE_MODEL, FIXED_VERTEX_MODEL, VERTEX_API_KEY_ENV } from "../shared/geminiConfig";
+import {
+  FALLBACK_IMAGE_MODEL,
+  FIXED_IMAGE_MODEL,
+  FIXED_VERTEX_MODEL,
+  VERTEX_API_KEY_ENV,
+} from "../shared/geminiConfig";
 import {
   generateRecipeRequestSchema,
   ingredientAnalysisResponseSchema,
@@ -78,6 +83,7 @@ describe("recipe contracts", () => {
     expect(VERTEX_API_KEY_ENV).toBe("VERTEX_API_KEY");
     expect(FIXED_VERTEX_MODEL).toBe("gemini-3.1-flash-lite");
     expect(FIXED_IMAGE_MODEL).toBe("gemini-3.1-flash-image");
+    expect(FALLBACK_IMAGE_MODEL).toBe("gemini-2.5-flash-image");
   });
 
   it("validates public release config and daily usage contracts", () => {

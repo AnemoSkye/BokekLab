@@ -9,6 +9,7 @@ import {
   setPersistence,
   signInWithEmailAndPassword,
   signInWithPopup,
+  signInWithRedirect,
   signOut,
   type User,
 } from "firebase/auth";
@@ -30,7 +31,19 @@ export function listenForAuth(config: FirebasePublicConfig, callback: (user: Use
 }
 
 export async function signInWithGoogle(config: FirebasePublicConfig) {
-  return signInWithPopup(initializeFirebaseClient(config), new GoogleAuthProvider());
+  const auth = initializeFirebaseClient(config);
+  const provider = new GoogleAuthProvider();
+  provider.setCustomParameters({ prompt: "select_account" });
+
+  try {
+    return await signInWithPopup(auth, provider);
+  } catch (error) {
+    if (shouldFallbackToRedirect(error)) {
+      return signInWithRedirect(auth, provider);
+    }
+
+    throw error;
+  }
 }
 
 export async function signInWithEmail(config: FirebasePublicConfig, email: string, password: string) {
@@ -47,4 +60,52 @@ export async function resetPassword(config: FirebasePublicConfig, email: string)
 
 export async function signOutOfFirebase(config: FirebasePublicConfig) {
   return signOut(initializeFirebaseClient(config));
+}
+
+export function firebaseAuthErrorMessage(error: unknown) {
+  const code =
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    typeof error.code === "string"
+      ? error.code
+      : "";
+
+  switch (code) {
+    case "auth/popup-closed-by-user":
+    case "auth/cancelled-popup-request":
+      return "Google login window closed before it finished. BokekLab will try the redirect login flow instead.";
+    case "auth/popup-blocked":
+      return "Your browser blocked the Google login popup. Please allow popups for BokekLab or use email login.";
+    case "auth/unauthorized-domain":
+      return "This website domain is not allowed in Firebase yet. Add your Cloud Run domain in Firebase Authentication > Authorized domains.";
+    case "auth/invalid-email":
+      return "That email address does not look valid yet.";
+    case "auth/user-not-found":
+    case "auth/wrong-password":
+    case "auth/invalid-credential":
+      return "Email or password is incorrect. Please try again or reset your password.";
+    case "auth/email-already-in-use":
+      return "That email already has an account. Try signing in instead.";
+    case "auth/weak-password":
+      return "Please use a stronger password with at least 6 characters.";
+    case "auth/network-request-failed":
+      return "Network hiccup while contacting Firebase. Check your connection and try again.";
+    default:
+      return error instanceof Error
+        ? "Login failed. Please try again, or use email login if Google sign-in keeps failing."
+        : "Login failed. Please try again.";
+  }
+}
+
+function shouldFallbackToRedirect(error: unknown) {
+  const code =
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    typeof error.code === "string"
+      ? error.code
+      : "";
+
+  return ["auth/popup-closed-by-user", "auth/popup-blocked", "auth/cancelled-popup-request"].includes(code);
 }

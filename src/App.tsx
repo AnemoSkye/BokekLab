@@ -86,6 +86,7 @@ import {
 } from "./lib/api";
 import { formatCompactDate, formatRupiah } from "./lib/format";
 import {
+  firebaseAuthErrorMessage,
   listenForAuth,
   resetPassword,
   signInWithEmail,
@@ -826,11 +827,7 @@ export function App() {
     try {
       await action();
     } catch (authActionError) {
-      setAuthError(
-        authActionError instanceof Error
-          ? authActionError.message
-          : "Login gagal. Coba lagi sebentar lagi.",
-      );
+      setAuthError(firebaseAuthErrorMessage(authActionError));
     }
   }
 

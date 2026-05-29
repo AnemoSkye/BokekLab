@@ -8,8 +8,12 @@ import {
   ingredientAnalysisJsonSchema,
   recipeJsonSchema,
 } from "../shared/recipe";
-import { FIXED_VERTEX_MODEL, VERTEX_API_KEY_ENV } from "../shared/geminiConfig";
-import { FIXED_IMAGE_MODEL } from "../shared/geminiConfig";
+import {
+  FALLBACK_IMAGE_MODEL,
+  FIXED_IMAGE_MODEL,
+  FIXED_VERTEX_MODEL,
+  VERTEX_API_KEY_ENV,
+} from "../shared/geminiConfig";
 import {
   parseStructuredIngredientAnalysis,
   parseStructuredRecipe,
@@ -197,7 +201,7 @@ export async function generateRecipeWithGemini(
 
 export async function generateRecipeImageWithGemini(
   recipe: RecipeResponse,
-): Promise<{ imageBytes: Buffer; mimeType: string }> {
+): Promise<{ imageBytes: Buffer; mimeType: string; model: string }> {
   const apiKey = process.env[VERTEX_API_KEY_ENV];
 
   if (!apiKey) {
@@ -208,30 +212,53 @@ export async function generateRecipeImageWithGemini(
   }
 
   const ai = new GoogleGenAI({ apiKey });
-  const response = (await ai.models.generateContent({
-    model: process.env.GEMINI_IMAGE_MODEL || FIXED_IMAGE_MODEL,
-    contents: buildRecipeImagePrompt(recipe),
-    config: {
-      temperature: 0.75,
-      responseModalities: ["IMAGE"],
-    },
-  } as unknown as Parameters<typeof ai.models.generateContent>[0])) as ImageCarrier;
-  const imagePart = response.candidates
-    ?.flatMap((candidate) => candidate.content?.parts ?? [])
-    .find((part) => part.inlineData?.data);
-  const data = imagePart?.inlineData?.data;
+  const prompt = buildRecipeImagePrompt(recipe);
+  const models = uniqueImageModels([process.env.GEMINI_IMAGE_MODEL || FIXED_IMAGE_MODEL, FALLBACK_IMAGE_MODEL]);
+  const failures: string[] = [];
 
-  if (!data) {
-    throw Object.assign(new Error("Gemini image generation did not return image data."), {
-      statusCode: 502,
-      code: "image_generation_failed",
-    });
+  for (const model of models) {
+    try {
+      const response = (await ai.models.generateContent({
+        model,
+        contents: prompt,
+        config: {
+          temperature: 0.75,
+          responseModalities: ["IMAGE"],
+        },
+      } as unknown as Parameters<typeof ai.models.generateContent>[0])) as ImageCarrier;
+      const imagePart = response.candidates
+        ?.flatMap((candidate) => candidate.content?.parts ?? [])
+        .find((part) => part.inlineData?.data);
+      const data = imagePart?.inlineData?.data;
+
+      if (!data) {
+        throw new Error("Gemini image generation did not return image data.");
+      }
+
+      if (model !== models[0]) {
+        console.warn(`BokekLab image generation fell back to ${model}.`);
+      }
+
+      return {
+        imageBytes: Buffer.from(data, "base64"),
+        mimeType: imagePart.inlineData?.mimeType || "image/png",
+        model,
+      };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      failures.push(`${model}: ${message}`);
+      console.warn(`BokekLab image generation failed with ${model}: ${message}`);
+    }
   }
 
-  return {
-    imageBytes: Buffer.from(data, "base64"),
-    mimeType: imagePart.inlineData?.mimeType || "image/png",
-  };
+  throw Object.assign(new Error(`Gemini image generation failed for all image models. ${failures.join(" | ")}`), {
+    statusCode: 502,
+    code: "image_generation_failed",
+  });
+}
+
+function uniqueImageModels(models: string[]) {
+  return [...new Set(models.map((model) => model.trim()).filter(Boolean))];
 }
 
 function isGroundingUnsupportedError(error: unknown) {
