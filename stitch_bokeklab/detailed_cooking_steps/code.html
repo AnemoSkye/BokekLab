@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+
+<html lang="id"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Langkah Memasak - Spicy Chicken Rendang</title>
+<!-- Google Fonts: Outfit & JetBrains Mono -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&amp;family=Outfit:wght@400;600;700&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Theme Configuration -->
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface": "#fcf9f8",
+                    "on-primary-container": "#fffbff",
+                    "primary": "#a43700",
+                    "surface-dim": "#dcd9d9",
+                    "tertiary-fixed": "#ffdbce",
+                    "secondary-container": "#fc820c",
+                    "on-background": "#1b1c1c",
+                    "surface-container-highest": "#e5e2e1",
+                    "on-surface-variant": "#5a4138",
+                    "outline-variant": "#e3bfb2",
+                    "on-surface": "#1b1c1c",
+                    "tertiary": "#72554b",
+                    "error-container": "#ffdad6",
+                    "primary-fixed-dim": "#ffb59a",
+                    "secondary": "#964900",
+                    "tertiary-container": "#8d6e63",
+                    "background": "#fcf9f8",
+                    "on-secondary": "#ffffff",
+                    "outline": "#8f7066",
+                    "on-secondary-fixed": "#311300",
+                    "on-primary-fixed": "#380d00",
+                    "inverse-on-surface": "#f3f0ef",
+                    "error": "#ba1a1a",
+                    "inverse-surface": "#303030",
+                    "on-tertiary-fixed": "#2b160f",
+                    "on-tertiary-container": "#fffbff",
+                    "on-secondary-container": "#5e2c00",
+                    "on-tertiary": "#ffffff",
+                    "surface-container-lowest": "#ffffff",
+                    "on-secondary-fixed-variant": "#723600",
+                    "on-primary-fixed-variant": "#802a00",
+                    "secondary-fixed-dim": "#ffb786",
+                    "primary-container": "#cd4700",
+                    "on-error": "#ffffff",
+                    "surface-tint": "#a83900",
+                    "primary-fixed": "#ffdbcf",
+                    "on-tertiary-fixed-variant": "#5b4137",
+                    "surface-container-high": "#eae7e7",
+                    "tertiary-fixed-dim": "#e4beb2",
+                    "on-error-container": "#93000a",
+                    "surface-container": "#f0eded",
+                    "surface-bright": "#fcf9f8",
+                    "surface-container-low": "#f6f3f2",
+                    "inverse-primary": "#ffb59a",
+                    "surface-variant": "#e5e2e1",
+                    "secondary-fixed": "#ffdcc6",
+                    "on-primary": "#ffffff"
+            },
+            "borderRadius": {
+                    "DEFAULT": "1rem",
+                    "lg": "2rem",
+                    "xl": "3rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "sm": "12px",
+                    "xl": "80px",
+                    "margin-mobile": "16px",
+                    "margin-desktop": "64px",
+                    "md": "24px",
+                    "lg": "48px",
+                    "base": "8px",
+                    "gutter": "24px",
+                    "xs": "4px"
+            },
+            "fontFamily": {
+                    "display-lg-mobile": ["Outfit"],
+                    "body-md": ["Outfit"],
+                    "display-lg": ["Outfit"],
+                    "body-lg": ["Outfit"],
+                    "data-label": ["JetBrains Mono"],
+                    "headline-md": ["Outfit"],
+                    "headline-sm": ["Outfit"],
+                    "data-value": ["JetBrains Mono"]
+            },
+            "fontSize": {
+                    "display-lg-mobile": ["36px", {"lineHeight": "42px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "display-lg": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                    "data-label": ["14px", {"lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                    "headline-md": ["32px", {"lineHeight": "40px", "fontWeight": "600"}],
+                    "headline-sm": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                    "data-value": ["12px", {"lineHeight": "16px", "fontWeight": "400"}]
+            }
+          }
+        }
+      }
+    </script>
+<style>.glass-panel {
+    background: rgba(255, 255, 255, 0.65);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    box-shadow: 0 8px 32px rgba(164, 55, 0, 0.05);
+    /* Subtle primary tint shadow */
+    }
+.glass-sidebar {
+    background: rgba(252, 249, 248, 0.7);
+    /* surface color with opacity */
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-right: 1px solid rgba(255, 255, 255, 0.6)
+    }
+.bg-culinary-blur {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: -1;
+    background-image: url(https://lh3.googleusercontent.com/aida-public/AB6AXuBEdBf6D_q6IV0mgPfK8U4o5ALQw3kcY9PiKAFjdLINJhteqQKLumfDVNdWeWxQAltDbKfPK9M-zRgm8aeyvAMhpH0hwZIUypqBVtDLzUFcm-4d8legGemOsKtgN9lnR5Fs9I_8dRzUMbxYLshsPGte7yUVqb0R0K1lsW5sesgdw7yupK8hBQSq5arGvG2aUffROMObsbmNSksAMeMpioGHKOn2TZ2Rgf9JewvpZKfluJWuUq_c2ACnq69Ad_BiSXKeHYsSA_qJA-_X);
+    background-size: cover;
+    background-position: center;
+    filter: blur(40px) opacity(0.4);
+    transform: scale(1.1);
+    /* Prevent blur edges */
+    }
+.bg-gradient-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: -1;
+    background: linear-gradient(135deg, rgba(252, 249, 248, 0.9) 0%, rgba(252, 249, 248, 0.7) 100%)
+    }</style>
+</head>
+<body class="font-body-md text-on-surface antialiased min-h-screen relative overflow-x-hidden">
+<!-- Atmospheric Background -->
+<div class="bg-culinary-blur" data-alt="A deeply blurred, warm-toned photograph of a high-end modern kitchen environment. Soft, organic lighting highlights hints of terracotta surfaces, fresh green herbs, and natural wooden textures in the out-of-focus background. The overall palette consists of creamy whites, warm ambers, and deep earthy browns, creating a cozy, appetizing, and inviting atmosphere that perfectly complements a culinary application's light mode aesthetic."></div>
+<div class="bg-gradient-overlay"></div>
+<!-- Floating Sidebar (Desktop) -->
+<aside class="hidden lg:flex fixed left-margin-desktop top-margin-desktop bottom-margin-desktop w-[88px] flex-col items-center py-xl rounded-full glass-sidebar z-40 shadow-[0_20px_40px_rgba(0,0,0,0.03)]">
+<div class="flex flex-col gap-8 h-full items-center">
+<!-- App Icon / Profile placeholder -->
+<div class="w-12 h-12 rounded-full overflow-hidden border-2 border-white/80 shadow-sm mb-auto cursor-pointer transition-transform hover:scale-105">
+<img alt="User Profile" class="w-full h-full object-cover" data-alt="A close-up, high-quality portrait of a chef in a crisp white uniform, smiling warmly in a softly lit, modern professional kitchen. The background features subtle warm orange and cream tones, aligning with the culinary brand aesthetic. The lighting is flattering and bright, emphasizing approachability and expertise." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCuSDfPGX4R4AIy8MjCOACaF7KxqdKuc1waw8FJp1ytQwfG0dpUzohXfzQwMkZHd5juIUw9EPhnpP4NL68eCsfVDsxK4mQYaPgdjSY20BdCuq9eBf0UeU0DQC5ph7HsyBhrCfsblZSeZnrlVht7_GGUwLWmpzWRnYt6v7olTxABo7o7r_--maBYX36wFjU6bFq0_6t37pLknfdJM_kr34Q-Li-S9uzCt4lU4__Bdouht7UALuUoNZsCY3DkPZWpOCy-foir94F2tg1k"/>
+</div>
+<!-- Nav Icons (Decorative for this focused view, but requested to be present) -->
+<button class="w-12 h-12 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-white/50 hover:text-primary transition-colors cursor-pointer">
+<span class="material-symbols-outlined text-[28px]">home</span>
+</button>
+<button class="w-12 h-12 rounded-full flex items-center justify-center bg-primary-fixed text-primary shadow-inner transition-colors cursor-pointer relative">
+<span class="material-symbols-outlined text-[28px]" style="font-variation-settings: 'FILL' 1;">restaurant_menu</span>
+<span class="absolute top-0 right-0 w-3 h-3 bg-secondary-container rounded-full border-2 border-surface-bright"></span>
+</button>
+<button class="w-12 h-12 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-white/50 hover:text-primary transition-colors cursor-pointer">
+<span class="material-symbols-outlined text-[28px]">kitchen</span>
+</button>
+<button class="w-12 h-12 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-white/50 hover:text-primary transition-colors cursor-pointer mt-auto">
+<span class="material-symbols-outlined text-[28px]">settings</span>
+</button>
+</div>
+</aside>
+<!-- Main Content Wrapper -->
+<main class="w-full lg:pl-[calc(88px+theme(spacing.margin-desktop)*2)] min-h-screen flex flex-col pt-margin-mobile lg:pt-margin-desktop px-margin-mobile lg:pr-margin-desktop pb-[120px]">
+<div class="max-w-[800px] w-full mx-auto flex-1 flex flex-col">
+<!-- Minimal Header for Focused View -->
+<header class="flex items-center gap-md mb-lg">
+<button class="w-12 h-12 rounded-full glass-panel flex items-center justify-center text-on-surface hover:bg-white/80 hover:text-primary transition-all cursor-pointer group">
+<span class="material-symbols-outlined transition-transform group-hover:-translate-x-1">arrow_back</span>
+</button>
+<div>
+<p class="font-data-label text-primary tracking-widest uppercase mb-1">Spicy Chicken Rendang</p>
+<h1 class="font-headline-md text-on-surface">Langkah Memasak</h1>
+</div>
+</header>
+<!-- Steps Container -->
+<div class="flex flex-col gap-md">
+<!-- Step 1 -->
+<div class="glass-panel rounded-lg p-md flex flex-col sm:flex-row gap-md relative group transition-all hover:shadow-[0_12px_40px_rgba(164,55,0,0.08)]">
+<!-- Number Indicator -->
+<div class="flex-shrink-0">
+<div class="w-12 h-12 rounded-full bg-primary-fixed text-primary flex items-center justify-center font-headline-sm shadow-inner border border-white/40 group-hover:scale-105 transition-transform">
+                            1
+                        </div>
+</div>
+<!-- Content -->
+<div class="flex flex-col gap-sm flex-1 pt-1">
+<p class="font-body-lg text-on-surface leading-relaxed">
+                            Panaskan minyak, tumis bumbu halus, serai, daun jeruk, dan asam kandis hingga harum.
+                        </p>
+<!-- Tools/Ingredients Chips -->
+<div class="flex flex-wrap gap-xs mt-2">
+<div class="px-3 py-1.5 rounded-full bg-white/50 border border-outline-variant flex items-center gap-2 text-on-surface-variant font-data-label text-data-value">
+<span class="material-symbols-outlined text-[16px]">skillet</span>
+                                Wajan Besar
+                            </div>
+<div class="px-3 py-1.5 rounded-full bg-white/50 border border-outline-variant flex items-center gap-2 text-on-surface-variant font-data-label text-data-value">
+<span class="material-symbols-outlined text-[16px]">cooking</span>
+                                Spatula Kayu
+                            </div>
+</div>
+</div>
+</div>
+<!-- Step 2 -->
+<div class="glass-panel rounded-lg p-md flex flex-col sm:flex-row gap-md relative group transition-all hover:shadow-[0_12px_40px_rgba(164,55,0,0.08)]">
+<!-- Number Indicator -->
+<div class="flex-shrink-0">
+<div class="w-12 h-12 rounded-full bg-primary-fixed text-primary flex items-center justify-center font-headline-sm shadow-inner border border-white/40 group-hover:scale-105 transition-transform">
+                            2
+                        </div>
+</div>
+<!-- Content -->
+<div class="flex flex-col gap-sm flex-1 pt-1">
+<p class="font-body-lg text-on-surface leading-relaxed">
+                            Masukkan potongan daging ayam segar, aduk rata dengan bumbu hingga ayam berubah warna dan permukaannya sedikit tertutup bumbu.
+                        </p>
+<!-- Tools/Ingredients Chips -->
+<div class="flex flex-wrap gap-xs mt-2">
+<div class="px-3 py-1.5 rounded-full bg-secondary-container/10 border border-secondary/20 flex items-center gap-2 text-secondary font-data-label text-data-value">
+<span class="material-symbols-outlined text-[16px]">local_fire_department</span>
+                                Api Sedang
+                            </div>
+</div>
+</div>
+</div>
+<!-- Step 3 -->
+<div class="glass-panel rounded-lg p-md flex flex-col sm:flex-row gap-md relative group transition-all hover:shadow-[0_12px_40px_rgba(164,55,0,0.08)]">
+<!-- Number Indicator -->
+<div class="flex-shrink-0">
+<div class="w-12 h-12 rounded-full bg-primary-fixed text-primary flex items-center justify-center font-headline-sm shadow-inner border border-white/40 group-hover:scale-105 transition-transform">
+                            3
+                        </div>
+</div>
+<!-- Content -->
+<div class="flex flex-col gap-sm flex-1 pt-1">
+<p class="font-body-lg text-on-surface leading-relaxed">
+                            Tuang santan perlahan. Masak dengan api kecil sambil terus diaduk perlahan dari dasar wajan agar santan tidak pecah. Lanjutkan memasak hingga bumbu meresap sempurna, ayam menjadi sangat empuk, dan kuah mengering mengeluarkan minyak.
+                        </p>
+<!-- Tools/Ingredients Chips -->
+<div class="flex flex-wrap gap-xs mt-2">
+<div class="px-3 py-1.5 rounded-full bg-white/50 border border-outline-variant flex items-center gap-2 text-on-surface-variant font-data-label text-data-value">
+<span class="material-symbols-outlined text-[16px]">timer</span>
+                                45-60 Menit
+                            </div>
+<div class="px-3 py-1.5 rounded-full bg-secondary-container/10 border border-secondary/20 flex items-center gap-2 text-secondary font-data-label text-data-value">
+<span class="material-symbols-outlined text-[16px]">local_fire_department</span>
+                                Api Kecil
+                            </div>
+</div>
+</div>
+</div>
+<!-- End State / Plating Info -->
+<div class="mt-8 text-center px-lg">
+<p class="font-data-label text-tertiary">Siap disajikan dengan nasi hangat dan taburan bawang goreng.</p>
+</div>
+</div>
+</div>
+</main>
+<!-- Bottom Action Bar (Fixed) -->
+<div class="fixed bottom-0 left-0 right-0 lg:pl-[calc(88px+theme(spacing.margin-desktop)*2)] glass-panel border-t border-white/50 py-md px-margin-mobile lg:px-margin-desktop z-30">
+<div class="max-w-[800px] w-full mx-auto flex justify-end">
+<button class="bg-primary hover:bg-surface-tint text-on-primary font-headline-sm text-[20px] py-4 px-12 rounded-full shadow-[0_8px_24px_rgba(164,55,0,0.3)] hover:shadow-[0_12px_32px_rgba(164,55,0,0.4)] transition-all hover:scale-[1.02] active:scale-[0.98] flex items-center gap-3">
+                Selesai Memasak
+                <span class="material-symbols-outlined text-[24px]">check_circle</span>
+</button>
+</div>
+</div>
+</body></html>

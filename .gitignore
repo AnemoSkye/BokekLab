@@ -1,0 +1,11 @@
+node_modules
+dist
+server-dist
+.env
+*.local
+*.log
+*.pid
+*.tsbuildinfo
+verification-*.png
+button-concept-*.png
+button_concept.mp4

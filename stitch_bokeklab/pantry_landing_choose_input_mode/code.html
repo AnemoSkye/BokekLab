@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+
+<html lang="id"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Tanggal Tua - Mari Kita Lihat Isi Dapurmu</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;700&amp;family=Inter:wght@400;500;700&amp;family=Jetbrains+Mono:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Outfit:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        "colors": {
+                "on-primary-fixed-variant": "#802a00",
+                "on-surface-variant": "#5a4138",
+                "error": "#ba1a1a",
+                "on-tertiary-fixed": "#2b160f",
+                "tertiary": "#72554b",
+                "on-primary-fixed": "#380d00",
+                "on-error": "#ffffff",
+                "primary": "#a43700",
+                "on-secondary-container": "#5e2c00",
+                "inverse-primary": "#ffb59a",
+                "surface-container-highest": "#e5e2e1",
+                "on-secondary-fixed": "#311300",
+                "on-secondary": "#ffffff",
+                "inverse-on-surface": "#f3f0ef",
+                "surface-bright": "#fcf9f8",
+                "on-primary": "#ffffff",
+                "surface-container-lowest": "#ffffff",
+                "error-container": "#ffdad6",
+                "on-error-container": "#93000a",
+                "inverse-surface": "#303030",
+                "surface": "#fcf9f8",
+                "on-background": "#1b1c1c",
+                "surface-tint": "#a83900",
+                "surface-container": "#f0eded",
+                "on-surface": "#1b1c1c",
+                "outline-variant": "#e3bfb2",
+                "surface-container-high": "#eae7e7",
+                "surface-container-low": "#f6f3f2",
+                "secondary": "#964900",
+                "primary-fixed": "#ffdbcf",
+                "secondary-fixed": "#ffdcc6",
+                "surface-variant": "#e5e2e1",
+                "primary-fixed-dim": "#ffb59a",
+                "tertiary-fixed-dim": "#e4beb2",
+                "on-tertiary-fixed-variant": "#5b4137",
+                "on-primary-container": "#fffbff",
+                "surface-dim": "#dcd9d9",
+                "outline": "#8f7066",
+                "tertiary-container": "#8d6e63",
+                "on-tertiary-container": "#fffbff",
+                "on-secondary-fixed-variant": "#723600",
+                "primary-container": "#cd4700",
+                "tertiary-fixed": "#ffdbce",
+                "secondary-fixed-dim": "#ffb786",
+                "on-tertiary": "#ffffff",
+                "background": "#fcf9f8",
+                "secondary-container": "#fc820c"
+        },
+        "borderRadius": {
+                "DEFAULT": "1rem",
+                "lg": "2rem",
+                "xl": "3rem",
+                "full": "9999px"
+        },
+        "spacing": {
+                "margin-desktop": "64px",
+                "sm": "12px",
+                "xl": "80px",
+                "xs": "4px",
+                "lg": "48px",
+                "gutter": "24px",
+                "md": "24px",
+                "margin-mobile": "16px",
+                "base": "8px",
+                "margin-page": "2rem",
+                "gutter-column": "1.5rem",
+                "navbar-width": "80px",
+                "card-padding": "2rem"
+        },
+        "fontFamily": {
+                "body-md": [
+                        "Outfit"
+                ],
+                "data-label": [
+                        "JetBrains Mono"
+                ],
+                "headline-md": [
+                        "Outfit"
+                ],
+                "body-lg": [
+                        "Outfit"
+                ],
+                "display-lg": [
+                        "Outfit"
+                ],
+                "display-lg-mobile": [
+                        "Outfit"
+                ],
+                "headline-sm": [
+                        "Outfit"
+                ],
+                "data-value": [
+                        "JetBrains Mono"
+                ],
+                "metadata": ["JetBrains Mono", "monospace"],
+                "label-mono": ["JetBrains Mono", "monospace"],
+                "headline-lg": ["Outfit", "sans-serif"],
+                "headline-lg-mobile": ["Outfit", "sans-serif"]
+        },
+        "fontSize": {
+                "body-md": [
+                        "16px",
+                        {
+                                "lineHeight": "24px",
+                                "fontWeight": "400"
+                        }
+                ],
+                "data-label": [
+                        "14px",
+                        {
+                                "lineHeight": "20px",
+                                "letterSpacing": "0.05em",
+                                "fontWeight": "500"
+                        }
+                ],
+                "headline-md": [
+                        "32px",
+                        {
+                                "lineHeight": "40px",
+                                "fontWeight": "600"
+                        }
+                ],
+                "body-lg": [
+                        "18px",
+                        {
+                                "lineHeight": "28px",
+                                "fontWeight": "400"
+                        }
+                ],
+                "display-lg": [
+                        "48px",
+                        {
+                                "lineHeight": "56px",
+                                "letterSpacing": "-0.02em",
+                                "fontWeight": "700"
+                        }
+                ],
+                "display-lg-mobile": [
+                        "36px",
+                        {
+                                "lineHeight": "42px",
+                                "letterSpacing": "-0.02em",
+                                "fontWeight": "700"
+                        }
+                ],
+                "headline-sm": [
+                        "24px",
+                        {
+                                "lineHeight": "32px",
+                                "fontWeight": "600"
+                        }
+                ],
+                "data-value": [
+                        "12px",
+                        {
+                                "lineHeight": "16px",
+                                "fontWeight": "400"
+                        }
+                ],
+                "metadata": ["12px", {lineHeight: "1.4", fontWeight: "400"}],
+                "label-mono": ["14px", {lineHeight: "1.4", letterSpacing: "0.05em", fontWeight: "500"}],
+                "headline-lg": ["48px", {lineHeight: "1.2", fontWeight: "600"}],
+                "headline-lg-mobile": ["32px", {lineHeight: "1.2", fontWeight: "600"}]
+        }
+},
+    },
+  }
+</script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .icon-fill {
+            font-variation-settings: 'FILL' 1;
+        }
+        
+        /* Organic ambient background animation */
+        @keyframes drift {
+            0% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(30px, -50px) scale(1.1); }
+            66% { transform: translate(-20px, 20px) scale(0.9); }
+            100% { transform: translate(0, 0) scale(1); }
+        }
+        .bg-blob {
+            animation: drift 20s infinite ease-in-out alternate;
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface antialiased min-h-screen font-body-md text-body-md overflow-x-hidden">
+<!-- Atmospheric Deep Background -->
+<div class="fixed inset-0 z-[-1] pointer-events-none overflow-hidden">
+<div class="absolute top-[-10%] left-[-5%] w-[60vw] h-[60vw] rounded-full bg-secondary-fixed opacity-40 blur-[120px] bg-blob"></div>
+<div class="absolute bottom-[-20%] right-[-10%] w-[70vw] h-[70vw] rounded-full bg-primary-fixed-dim opacity-30 blur-[150px] bg-blob" style="animation-delay: -10s;"></div>
+</div>
+<div class="flex min-h-screen w-full">
+<!-- SideNavBar Component (Sourced from JSON) -->
+<nav class="fixed left-0 top-0 h-full w-navbar-width bg-white/80 dark:bg-surface-container/80 backdrop-blur-2xl shadow-sm flex flex-col items-center py-8 gap-8 z-50">
+<!-- Brand/Avatar Header -->
+<div class="flex flex-col items-center gap-2 mb-4 group cursor-pointer">
+<div class="w-10 h-10 rounded-full bg-surface-variant flex items-center justify-center overflow-hidden border border-outline-variant hover:border-primary transition-colors">
+<span class="material-symbols-outlined text-primary text-[20px]" data-icon="person">person</span>
+</div>
+</div>
+<!-- Navigation Links -->
+<div class="flex flex-col gap-6 w-full items-center">
+<!-- Active Tab: Input Desk -->
+<button aria-label="Input Desk" class="relative w-full flex justify-center py-2 group scale-95 transition-all duration-150">
+<div class="absolute right-0 top-0 bottom-0 border-r-4 border-primary rounded-l-full"></div>
+<span class="material-symbols-outlined text-primary dark:text-primary-fixed font-bold icon-fill hover:rotate-12 transition-transform duration-200" data-icon="kitchen" data-weight="fill">kitchen</span>
+</button>
+<!-- Inactive Tab: Cooking Canvas -->
+<button aria-label="Cooking Canvas" class="relative w-full flex justify-center py-2 group">
+<span class="material-symbols-outlined text-on-surface-variant dark:text-outline opacity-60 hover:rotate-12 transition-transform duration-200 hover:text-primary" data-icon="auto_awesome">auto_awesome</span>
+</button>
+<!-- Inactive Tab: Warung Run -->
+<button aria-label="Warung Run" class="relative w-full flex justify-center py-2 group">
+<span class="material-symbols-outlined text-on-surface-variant dark:text-outline opacity-60 hover:rotate-12 transition-transform duration-200 hover:text-primary" data-icon="shopping_cart">shopping_cart</span>
+</button>
+</div>
+<!-- CTA -->
+<div class="mt-auto">
+<button aria-label="New Recipe" class="w-10 h-10 rounded-full bg-primary text-on-primary flex items-center justify-center shadow-md hover:scale-95 transition-transform duration-150">
+<span class="material-symbols-outlined text-[20px]" data-icon="add">add</span>
+</button>
+</div>
+</nav>
+<!-- Main Content Canvas -->
+<main class="flex-1 ml-navbar-width flex flex-col items-center justify-center p-margin-page min-h-screen">
+<!-- Core Interaction Card (Aesthetic Materiality) -->
+<div class="relative w-full max-w-4xl bg-white/70 backdrop-blur-2xl rounded-xl border border-surface-variant shadow-[0_8px_32px_rgba(31,25,36,0.05)] p-12 md:p-16 flex flex-col items-center text-center gap-12 transition-all duration-500 hover:shadow-[0_12px_48px_rgba(164,55,0,0.08)] hover:border-primary-fixed-dim">
+<!-- Title Block -->
+<div class="flex flex-col gap-4 items-center">
+<span class="inline-flex items-center justify-center px-4 py-1 rounded-full bg-surface-container-high border border-outline-variant font-metadata text-metadata text-primary uppercase tracking-widest mb-2">
+                        Input Desk
+                    </span>
+<h1 class="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-surface tracking-tight max-w-2xl leading-tight">
+                        Mari Kita Lihat Isi Dapurmu
+                    </h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant max-w-xl">
+                        Tentukan bahan yang kamu miliki, dan biarkan Tanggal Tua meracik keajaiban untuk bertahan hidup.
+                    </p>
+</div>
+<!-- Category Chips (Tactile Pillars) -->
+<div class="w-full">
+<div class="flex flex-wrap justify-center gap-4">
+<div class="px-6 py-3 rounded-full bg-surface-container border border-surface-variant font-label-mono text-label-mono text-on-surface shadow-sm flex items-center gap-2 cursor-pointer hover:-translate-y-1 hover:shadow-md hover:border-secondary-fixed transition-all duration-200">
+<span class="material-symbols-outlined text-[18px] text-tertiary" data-icon="grain">grain</span>
+                            Carbohydrates
+                        </div>
+<div class="px-6 py-3 rounded-full bg-surface-container border border-surface-variant font-label-mono text-label-mono text-on-surface shadow-sm flex items-center gap-2 cursor-pointer hover:-translate-y-1 hover:shadow-md hover:border-secondary-fixed transition-all duration-200">
+<span class="material-symbols-outlined text-[18px] text-error" data-icon="egg_alt">egg_alt</span>
+                            Protein
+                        </div>
+<div class="px-6 py-3 rounded-full bg-surface-container border border-surface-variant font-label-mono text-label-mono text-on-surface shadow-sm flex items-center gap-2 cursor-pointer hover:-translate-y-1 hover:shadow-md hover:border-secondary-fixed transition-all duration-200">
+<span class="material-symbols-outlined text-[18px] text-primary" data-icon="nutrition">nutrition</span>
+                            Vegetables/Seasoning
+                        </div>
+</div>
+</div>
+<!-- Primary Action Zone -->
+<div class="flex flex-col sm:flex-row items-center gap-6 mt-4 w-full justify-center">
+<!-- Photo Mode Button -->
+<button class="w-full sm:w-auto px-8 py-5 rounded-full bg-primary text-on-primary font-body-lg text-body-lg flex items-center justify-center gap-3 shadow-lg hover:shadow-xl hover:scale-[0.98] transition-all duration-200 group">
+<span class="material-symbols-outlined text-[24px] group-hover:scale-110 transition-transform" data-icon="photo_camera">photo_camera</span>
+                        Ambil Foto Bahan
+                    </button>
+<!-- Text Mode Button -->
+<button class="w-full sm:w-auto px-8 py-5 rounded-full bg-surface-container-high text-on-surface border border-outline-variant font-body-lg text-body-lg flex items-center justify-center gap-3 hover:bg-surface-container-highest hover:scale-[0.98] transition-all duration-200 group">
+<span class="material-symbols-outlined text-[24px] text-on-surface-variant group-hover:text-primary transition-colors" data-icon="keyboard">keyboard</span>
+                        Ketik Manual
+                    </button>
+</div>
+</div>
+</main>
+</div>
+</body></html>
