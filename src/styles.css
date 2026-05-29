@@ -2268,6 +2268,7 @@ button:disabled {
   text-align: center;
   color: var(--brand-primary);
   background:
+    radial-gradient(circle at 50% 38%, color-mix(in srgb, var(--brand-primary) 18%, transparent), transparent 34%),
     linear-gradient(135deg, var(--brand-soft), rgba(255, 255, 255, 0.72)),
     var(--surface);
   overflow: hidden;
@@ -2284,9 +2285,9 @@ button:disabled {
 .recipe-placeholder::after {
   content: "";
   position: absolute;
-  inset: auto 0 0;
-  height: 44%;
-  background: linear-gradient(180deg, transparent, #100b16 92%);
+  inset: 12px;
+  border: 1px dashed color-mix(in srgb, var(--brand-primary) 42%, transparent);
+  border-radius: calc(var(--radius-lg) - 12px);
   pointer-events: none;
 }
 
@@ -2306,13 +2307,14 @@ button:disabled {
   max-width: 210px;
   padding: 8px 12px;
   border-radius: 999px;
-  color: #fff;
-  background: rgba(255, 99, 33, 0.92);
+  color: var(--brand-primary);
+  background: var(--surface-strong);
+  border: 1px solid var(--brand-border);
 }
 
 .recipe-placeholder[data-image-status="pending"] span {
-  color: #fff;
-  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.34);
+  color: var(--brand-primary);
+  text-shadow: none;
 }
 
 .recipe-placeholder:not([data-compact="true"]) svg,
@@ -2341,7 +2343,9 @@ button:disabled {
   border: 1px solid var(--brand-primary);
   border-radius: 34px;
   color: var(--brand-primary);
-  background: #100b16;
+  background:
+    radial-gradient(circle at 50% 40%, color-mix(in srgb, var(--brand-primary) 20%, transparent), transparent 36%),
+    var(--surface);
 }
 
 .recipe-back-anchor {

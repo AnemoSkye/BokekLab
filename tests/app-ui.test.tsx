@@ -374,7 +374,7 @@ describe("BokekLab staged UI", () => {
     await waitFor(() => expect(screen.getByText("Indomie Telur Fokus")).toBeTruthy(), {
       timeout: 10000,
     });
-    expect(screen.getAllByText("Generating image").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Preparing recipe image").length).toBeGreaterThan(0);
     expect(screen.getByText("NutriLevel D")).toBeTruthy();
     expect(screen.getByText("540")).toBeTruthy();
     expect(screen.getByText("18g Protein")).toBeTruthy();

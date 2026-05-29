@@ -2,6 +2,7 @@ import { getApps, initializeApp, applicationDefault, cert } from "firebase-admin
 import { getAuth } from "firebase-admin/auth";
 import { FieldValue, Timestamp, getFirestore, type DocumentData } from "firebase-admin/firestore";
 import { getStorage } from "firebase-admin/storage";
+import { randomUUID } from "node:crypto";
 import type {
   RecipePatchRequest,
   SavedRecipe,
@@ -314,22 +315,27 @@ export async function uploadRecipeImage(
 
   const extension = mimeType.includes("png") ? "png" : mimeType.includes("webp") ? "webp" : "jpg";
   const storagePath = `users/${uid}/recipes/${recipeId}/hero.${extension}`;
-  const file = getStorage(getAdminApp()).bucket().file(storagePath);
+  const bucket = getStorage(getAdminApp()).bucket();
+  const bucketName = bucket.name;
+  const file = bucket.file(storagePath);
+  const downloadToken = randomUUID();
 
   await file.save(imageBytes, {
     metadata: {
       contentType: mimeType,
       cacheControl: "public, max-age=31536000, immutable",
+      metadata: {
+        firebaseStorageDownloadTokens: downloadToken,
+      },
     },
     resumable: false,
   });
 
-  const [signedUrl] = await file.getSignedUrl({
-    action: "read",
-    expires: Date.now() + 1000 * 60 * 60 * 24 * 7,
-  });
+  const imageUrl = `https://firebasestorage.googleapis.com/v0/b/${bucketName}/o/${encodeURIComponent(
+    storagePath,
+  )}?alt=media&token=${downloadToken}`;
 
-  return { imageUrl: signedUrl, imageStoragePath: storagePath };
+  return { imageUrl, imageStoragePath: storagePath };
 }
 
 function serializeRecipe(recipe: SavedRecipe) {

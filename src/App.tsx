@@ -2782,9 +2782,8 @@ function RecipeImage({ recipe, compact = false }: { recipe: RecipeResponse; comp
         <img src={recipe.imageUrl} alt={recipe.recipeName} />
       ) : (
         <>
-          <img src="/recipe-hero-burger.png" alt="" aria-hidden="true" />
           <Sparkles size={compact ? 22 : 34} aria-hidden="true" />
-          <span>{recipe.imageStatus === "failed" ? "Image generation failed" : "Generating image"}</span>
+          <span>{recipe.imageStatus === "failed" ? "Image unavailable" : "Preparing recipe image"}</span>
         </>
       )}
     </div>
