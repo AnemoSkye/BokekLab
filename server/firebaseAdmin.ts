@@ -339,16 +339,36 @@ export async function uploadRecipeImage(
 }
 
 function serializeRecipe(recipe: SavedRecipe) {
-  return {
+  return stripUndefined({
     ...recipe,
     createdAtTimestamp: Timestamp.fromDate(new Date(recipe.createdAt)),
     updatedAt: FieldValue.serverTimestamp(),
-  };
+  });
 }
 
 function deserializeRecipe(data: DocumentData): SavedRecipe {
   const { createdAtTimestamp: _createdAtTimestamp, updatedAt: _updatedAt, ...recipe } = data;
   return recipe as SavedRecipe;
+}
+
+function stripUndefined<T>(value: T): T {
+  if (Array.isArray(value)) {
+    return value.map((item) => stripUndefined(item)) as T;
+  }
+
+  if (value && typeof value === "object") {
+    if (value instanceof Timestamp || value instanceof FieldValue) {
+      return value;
+    }
+
+    return Object.fromEntries(
+      Object.entries(value)
+        .filter(([, entryValue]) => entryValue !== undefined)
+        .map(([key, entryValue]) => [key, stripUndefined(entryValue)]),
+    ) as T;
+  }
+
+  return value;
 }
 
 function formatUsage(
