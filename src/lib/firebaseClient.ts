@@ -9,7 +9,6 @@ import {
   setPersistence,
   signInWithEmailAndPassword,
   signInWithPopup,
-  signInWithRedirect,
   signOut,
   type User,
 } from "firebase/auth";
@@ -35,15 +34,7 @@ export async function signInWithGoogle(config: FirebasePublicConfig) {
   const provider = new GoogleAuthProvider();
   provider.setCustomParameters({ prompt: "select_account" });
 
-  try {
-    return await signInWithPopup(auth, provider);
-  } catch (error) {
-    if (shouldFallbackToRedirect(error)) {
-      return signInWithRedirect(auth, provider);
-    }
-
-    throw error;
-  }
+  return signInWithPopup(auth, provider);
 }
 
 export async function signInWithEmail(config: FirebasePublicConfig, email: string, password: string) {
@@ -74,7 +65,7 @@ export function firebaseAuthErrorMessage(error: unknown) {
   switch (code) {
     case "auth/popup-closed-by-user":
     case "auth/cancelled-popup-request":
-      return "Google login window closed before it finished. BokekLab will try the redirect login flow instead.";
+      return "Google login did not finish. Please try again and keep the Google window open until it returns to BokekLab.";
     case "auth/popup-blocked":
       return "Your browser blocked the Google login popup. Please allow popups for BokekLab or use email login.";
     case "auth/unauthorized-domain":
@@ -96,16 +87,4 @@ export function firebaseAuthErrorMessage(error: unknown) {
         ? "Login failed. Please try again, or use email login if Google sign-in keeps failing."
         : "Login failed. Please try again.";
   }
-}
-
-function shouldFallbackToRedirect(error: unknown) {
-  const code =
-    typeof error === "object" &&
-    error !== null &&
-    "code" in error &&
-    typeof error.code === "string"
-      ? error.code
-      : "";
-
-  return ["auth/popup-closed-by-user", "auth/popup-blocked", "auth/cancelled-popup-request"].includes(code);
 }
