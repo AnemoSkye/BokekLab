@@ -39,17 +39,20 @@ function getAdminApp() {
 
   const storageBucket = process.env.FIREBASE_STORAGE_BUCKET;
   const serviceAccountJson = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
+  const projectId = process.env.FIREBASE_PROJECT_ID;
 
   if (serviceAccountJson) {
     return initializeApp({
       credential: cert(JSON.parse(serviceAccountJson)),
       storageBucket,
+      projectId,
     });
   }
 
   return initializeApp({
     credential: applicationDefault(),
     storageBucket,
+    projectId,
   });
 }
 

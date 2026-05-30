@@ -14,6 +14,7 @@ import {
   FALLBACK_VERTEX_MODEL,
   FIXED_IMAGE_MODEL,
   FIXED_VERTEX_MODEL,
+  VERTEX_AI_PROJECT_ENV,
   VERTEX_API_KEY_ENV,
   VERTEX_LOCATION_ENV,
   VERTEX_PROJECT_ENV,
@@ -346,6 +347,7 @@ function createGeminiClient() {
   }
 
   const project =
+    process.env[VERTEX_AI_PROJECT_ENV] ||
     process.env[VERTEX_PROJECT_ENV] ||
     process.env.GCLOUD_PROJECT ||
     process.env.FIREBASE_PROJECT_ID;
