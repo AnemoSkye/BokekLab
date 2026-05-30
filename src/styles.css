@@ -218,6 +218,11 @@ button:disabled {
   border-color: rgba(168, 85, 247, 0.68);
 }
 
+.app-shell[data-color-scheme="dark"] .photo-source-popover {
+  background: #211729;
+  border-color: rgba(168, 85, 247, 0.68);
+}
+
 .app-shell[data-color-scheme="dark"] .circle-action svg {
   color: #fff;
 }
@@ -963,6 +968,7 @@ button:disabled {
 }
 
 .home-actions {
+  position: relative;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -984,6 +990,41 @@ button:disabled {
     border-radius 240ms ease,
     background 240ms ease,
     box-shadow 240ms ease;
+}
+
+.photo-source-popover {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 12px);
+  z-index: 20;
+  display: flex;
+  gap: 8px;
+  padding: 8px;
+  border: 1px solid var(--brand-border);
+  border-radius: 999px;
+  background: var(--surface-strong);
+  box-shadow: 0 20px 48px rgba(34, 27, 40, 0.14);
+  transform: translateX(-50%);
+}
+
+.photo-source-popover button {
+  min-width: 104px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 0;
+  border-radius: 999px;
+  color: var(--brand-primary);
+  background: transparent;
+  font-family: var(--font-display);
+  font-weight: 800;
+}
+
+.photo-source-popover button:hover {
+  color: #fff;
+  background: var(--brand-primary);
 }
 
 .home-actions[data-mode="type"],

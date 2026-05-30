@@ -125,6 +125,7 @@ function buildIngredientAnalysisPrompt() {
     "Classify each ingredient into pantryMatrix carbs, proteins, veggies, or condiments.",
     "Use concise Indonesian market names where possible, such as Nasi, Telur, Tempe, Kangkung, Cabe, Kecap, Bawang.",
     "Ignore utensils, plates, packaging with no food visible, people, pets, appliances, and unsafe/unusable items.",
+    "If the main visible subject is non-food, such as shoes, stones, paper, tools, plastic, electronics, or clothing, return empty pantry arrays and put that object in ignoredItems.",
     "If no usable ingredients are visible, return empty arrays and explain briefly in detectedSummary.",
   ].join("\n");
 }
@@ -145,6 +146,7 @@ function buildCombinedInputAnalysisPrompt(payload: IngredientInputRequest) {
     "Use concise Indonesian market names where possible, such as Nasi, Telur, Tempe, Kangkung, Cabe, Kecap, Bawang.",
     "Preserve user-selected chips unless they are obviously non-food.",
     "Ignore utensils, plates, packaging with no food visible, people, appliances, and unsafe/unusable items.",
+    "If typed text or images mainly describe non-food, such as shoes, stones, paper, tools, plastic, electronics, or clothing, return empty pantry arrays for that input and put those objects in ignoredItems.",
     "If typed text has comma-separated or casual lists, normalize them into individual ingredients.",
     "",
     `typedText: ${payload.typedText?.trim() || "none"}`,

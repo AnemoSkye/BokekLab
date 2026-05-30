@@ -213,6 +213,46 @@ function isSupportedPhotoMimeType(mimeType: string): mimeType is IngredientPhoto
   return ingredientPhotoMimeTypeSchema.safeParse(mimeType).success;
 }
 
+const OBVIOUS_NON_FOOD_TERMS = [
+  "shoe",
+  "shoes",
+  "sepatu",
+  "stone",
+  "stones",
+  "batu",
+  "paper",
+  "papers",
+  "kertas",
+  "plastic",
+  "plastik",
+  "phone",
+  "hp",
+  "ponsel",
+  "charger",
+  "cable",
+  "kabel",
+  "wallet",
+  "dompet",
+  "coin",
+  "coins",
+  "uang",
+  "remote",
+  "pen",
+  "pens",
+  "pulpen",
+  "pencil",
+  "pensil",
+];
+
+function findObviousNonFoodTerm(text: string) {
+  const normalized = text.toLowerCase();
+  return OBVIOUS_NON_FOOD_TERMS.find((term) => new RegExp(`\\b${term}\\b`, "i").test(normalized));
+}
+
+function playfulNonFoodMessage(item: string) {
+  return `Really? do you think ${item} is edible? Try again.`;
+}
+
 function readFileAsDataUrl(file: File) {
   return new Promise<{ imageBase64: string; previewUrl: string }>((resolve, reject) => {
     const reader = new FileReader();
@@ -516,6 +556,14 @@ export function App() {
     if (!hasTypedText && !hasImages) {
       setPhotoError("");
       setEntryStage("setup");
+      return;
+    }
+
+    const obviousNonFood = findObviousNonFoodTerm(typedIngredientText);
+
+    if (obviousNonFood) {
+      setPhotoStatus("error");
+      setPhotoError(playfulNonFoodMessage(obviousNonFood));
       return;
     }
 
@@ -1579,11 +1627,28 @@ function HomeLauncher({
   onRemoveComposerImage: (imageId: string) => void;
   onClearComposer: () => void;
 }) {
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const galleryInputRef = useRef<HTMLInputElement | null>(null);
+  const cameraInputRef = useRef<HTMLInputElement | null>(null);
+  const [isPhotoSourceOpen, setIsPhotoSourceOpen] = useState(false);
   const isPhotoLoading = photoStatus === "loading";
   const hasComposerContent = Boolean(typedIngredientText.trim()) || composerImages.length > 0;
   const canContinue = selectedCount > 0 || hasComposerContent;
   const hasChipOnlyIntent = homeInputMode === "idle" && selectedCount > 0;
+  const handlePhotoFiles = (files: FileList | null) => {
+    const remainingSlots = Math.max(0, 3 - composerImages.length);
+    Array.from(files ?? [])
+      .slice(0, remainingSlots)
+      .forEach((file) => onPhotoFile(file));
+  };
+  const openPhotoSource = () => setIsPhotoSourceOpen((current) => !current);
+  const chooseGallery = () => {
+    setIsPhotoSourceOpen(false);
+    galleryInputRef.current?.click();
+  };
+  const chooseCamera = () => {
+    setIsPhotoSourceOpen(false);
+    cameraInputRef.current?.click();
+  };
 
   return (
     <div className="home-stage">
@@ -1618,16 +1683,24 @@ function HomeLauncher({
       {photoError && <p className="inline-error">{photoError}</p>}
 
       <input
-        ref={fileInputRef}
+        ref={galleryInputRef}
         className="visually-hidden"
         type="file"
         multiple
         accept="image/png,image/jpeg,image/webp,image/heic,image/heif"
         onChange={(event) => {
-          const remainingSlots = Math.max(0, 3 - composerImages.length);
-          Array.from(event.target.files ?? [])
-            .slice(0, remainingSlots)
-            .forEach((file) => onPhotoFile(file));
+          handlePhotoFiles(event.target.files);
+          event.currentTarget.value = "";
+        }}
+      />
+      <input
+        ref={cameraInputRef}
+        className="visually-hidden"
+        type="file"
+        accept="image/png,image/jpeg,image/webp,image/heic,image/heif"
+        capture="environment"
+        onChange={(event) => {
+          handlePhotoFiles(event.target.files);
           event.currentTarget.value = "";
         }}
       />
@@ -1702,7 +1775,7 @@ function HomeLauncher({
                     aria-label="Add photo"
                     tooltip="Tambahkan foto bahan lain"
                     disabled={isPhotoLoading}
-                    onClick={() => fileInputRef.current?.click()}
+                    onClick={openPhotoSource}
                   >
                     <Plus size={19} aria-hidden="true" />
                   </ActionButton>
@@ -1734,7 +1807,7 @@ function HomeLauncher({
                   aria-label="Photo"
                   tooltip="Ambil dari kamera atau galeri"
                   disabled={isPhotoLoading}
-                  onClick={() => fileInputRef.current?.click()}
+                  onClick={openPhotoSource}
                 >
                   <Camera size={21} aria-hidden="true" />
                   {hasChipOnlyIntent ? null : isPhotoLoading ? "Membaca..." : "Photo"}
@@ -1812,6 +1885,27 @@ function HomeLauncher({
               </motion.div>
             )}
           </>
+          <AnimatePresence>
+            {isPhotoSourceOpen && (
+              <motion.div
+                className="photo-source-popover"
+                key="photo-source-popover"
+                initial={{ opacity: 0, scale: 0.92, y: 8 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.92, y: 8 }}
+                transition={SOFT_SPRING}
+              >
+                <button type="button" onClick={chooseCamera}>
+                  <Camera size={17} aria-hidden="true" />
+                  Camera
+                </button>
+                <button type="button" onClick={chooseGallery}>
+                  <ImageUp size={17} aria-hidden="true" />
+                  Gallery
+                </button>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </motion.div>
       </LayoutGroup>
     </div>

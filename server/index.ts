@@ -88,6 +88,8 @@ app.use(
           "https://accounts.google.com",
         ],
         frameSrc: ["'self'", "https://accounts.google.com", "https://*.firebaseapp.com"],
+        workerSrc: ["'self'"],
+        manifestSrc: ["'self'"],
         formAction: ["'self'"],
         ...(isProduction ? { upgradeInsecureRequests: [] } : {}),
       },
@@ -213,6 +215,7 @@ app.post("/api/ingredients/analyze-photo", requireAuth, requireAiEnabled, async 
 
     try {
       const analysis = await analyzeIngredientsWithGemini(parsed.data);
+      assertIngredientAnalysisIsEdible(analysis);
       res.json(analysis);
     } catch (error) {
       await refundDailyUsage(req.user!.uid, "ingredientAnalyses");
@@ -242,6 +245,7 @@ app.post("/api/ingredients/analyze-input", requireAuth, requireAiEnabled, async 
 
     try {
       const analysis = await analyzeInputWithGemini(parsed.data);
+      assertIngredientAnalysisIsEdible(analysis);
       res.json(analysis);
     } catch (error) {
       await refundDailyUsage(req.user!.uid, "ingredientAnalyses");
@@ -344,6 +348,18 @@ function logApiFailure(message: string, error: unknown, context: Record<string, 
     statusCode: errorLike?.statusCode ?? errorLike?.status,
     error: summarizeError(error, "Unknown server error."),
   });
+}
+
+function assertIngredientAnalysisIsEdible(analysis: { pantryMatrix: Record<string, string[]>; ignoredItems: string[] }) {
+  const usableCount = Object.values(analysis.pantryMatrix).reduce((total, items) => total + items.length, 0);
+  const ignoredItem = analysis.ignoredItems.find((item) => item.trim());
+
+  if (usableCount === 0 && ignoredItem) {
+    throw Object.assign(new Error(`Really? do you think ${ignoredItem} is edible? Try again.`), {
+      statusCode: 422,
+      code: "non_food_input",
+    });
+  }
 }
 
 function requireAiEnabled(_req: express.Request, res: express.Response, next: express.NextFunction) {
