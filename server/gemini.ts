@@ -9,11 +9,14 @@ import {
   recipeJsonSchema,
 } from "../shared/recipe";
 import {
+  AI_BACKEND_ENV,
   FALLBACK_IMAGE_MODEL,
   FALLBACK_VERTEX_MODEL,
   FIXED_IMAGE_MODEL,
   FIXED_VERTEX_MODEL,
   VERTEX_API_KEY_ENV,
+  VERTEX_LOCATION_ENV,
+  VERTEX_PROJECT_ENV,
 } from "../shared/geminiConfig";
 import {
   parseStructuredIngredientAnalysis,
@@ -173,16 +176,7 @@ async function generateContent(
 export async function generateRecipeWithGemini(
   payload: GenerateRecipeRequest,
 ): Promise<RecipeResponse> {
-  const apiKey = process.env[VERTEX_API_KEY_ENV];
-
-  if (!apiKey) {
-    throw Object.assign(new Error(`${VERTEX_API_KEY_ENV} is not configured.`), {
-      statusCode: 503,
-      code: "missing_api_key",
-    });
-  }
-
-  const ai = new GoogleGenAI({ apiKey });
+  const ai = createGeminiClient();
   const contents = buildPrompt(payload);
 
   try {
@@ -223,16 +217,7 @@ async function generateRecipeContentWithModel(
 export async function generateRecipeImageWithGemini(
   recipe: RecipeResponse,
 ): Promise<{ imageBytes: Buffer; mimeType: string; model: string }> {
-  const apiKey = process.env[VERTEX_API_KEY_ENV];
-
-  if (!apiKey) {
-    throw Object.assign(new Error(`${VERTEX_API_KEY_ENV} is not configured.`), {
-      statusCode: 503,
-      code: "missing_api_key",
-    });
-  }
-
-  const ai = new GoogleGenAI({ apiKey });
+  const ai = createGeminiClient();
   const prompt = buildRecipeImagePrompt(recipe);
   const models = uniqueImageModels([process.env.GEMINI_IMAGE_MODEL || FIXED_IMAGE_MODEL, FALLBACK_IMAGE_MODEL]);
   const failures: string[] = [];
@@ -297,16 +282,7 @@ function shouldTryFallbackTextModel(error: unknown) {
 export async function analyzeIngredientsWithGemini(
   payload: IngredientPhotoRequest,
 ): Promise<IngredientAnalysisResponse> {
-  const apiKey = process.env[VERTEX_API_KEY_ENV];
-
-  if (!apiKey) {
-    throw Object.assign(new Error(`${VERTEX_API_KEY_ENV} is not configured.`), {
-      statusCode: 503,
-      code: "missing_api_key",
-    });
-  }
-
-  const ai = new GoogleGenAI({ apiKey });
+  const ai = createGeminiClient();
   const contents = [
     {
       inlineData: {
@@ -331,16 +307,7 @@ export async function analyzeIngredientsWithGemini(
 export async function analyzeInputWithGemini(
   payload: IngredientInputRequest,
 ): Promise<IngredientAnalysisResponse> {
-  const apiKey = process.env[VERTEX_API_KEY_ENV];
-
-  if (!apiKey) {
-    throw Object.assign(new Error(`${VERTEX_API_KEY_ENV} is not configured.`), {
-      statusCode: 503,
-      code: "missing_api_key",
-    });
-  }
-
-  const ai = new GoogleGenAI({ apiKey });
+  const ai = createGeminiClient();
   const contents = [
     ...payload.images.map((image) => ({
       inlineData: {
@@ -360,6 +327,42 @@ export async function analyzeInputWithGemini(
   );
 
   return parseStructuredIngredientAnalysis(extractResponseText(response));
+}
+
+function createGeminiClient() {
+  const backend = process.env[AI_BACKEND_ENV] || "vertex";
+
+  if (backend === "gemini-api") {
+    const apiKey = process.env[VERTEX_API_KEY_ENV];
+
+    if (!apiKey) {
+      throw Object.assign(new Error(`${VERTEX_API_KEY_ENV} is not configured.`), {
+        statusCode: 503,
+        code: "missing_api_key",
+      });
+    }
+
+    return new GoogleGenAI({ apiKey });
+  }
+
+  const project =
+    process.env[VERTEX_PROJECT_ENV] ||
+    process.env.GCLOUD_PROJECT ||
+    process.env.FIREBASE_PROJECT_ID;
+  const location = process.env[VERTEX_LOCATION_ENV] || process.env.VERTEX_AI_LOCATION || "global";
+
+  if (!project) {
+    throw Object.assign(new Error(`${VERTEX_PROJECT_ENV} is not configured for Vertex AI mode.`), {
+      statusCode: 503,
+      code: "missing_vertex_project",
+    });
+  }
+
+  return new GoogleGenAI({
+    enterprise: true,
+    project,
+    location,
+  });
 }
 
 export const geminiInternalsForTests = {

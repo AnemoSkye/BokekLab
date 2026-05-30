@@ -1,5 +1,5 @@
 import type { AppConfigResponse, FirebasePublicConfig } from "../shared/recipe";
-import { VERTEX_API_KEY_ENV } from "../shared/geminiConfig";
+import { AI_BACKEND_ENV, VERTEX_API_KEY_ENV } from "../shared/geminiConfig";
 
 export const APP_VERSION = process.env.BOKEKLAB_APP_VERSION || "1.0.0";
 export const RECIPE_DAILY_LIMIT = Number(process.env.RECIPE_DAILY_LIMIT || 10);
@@ -57,8 +57,10 @@ export function assertProductionReleaseConfig(isProduction: boolean) {
     throw new Error("Production auth is enabled, but Firebase public config is incomplete.");
   }
 
-  if (AI_FEATURES_ENABLED && !process.env[VERTEX_API_KEY_ENV]) {
-    throw new Error(`Production AI is enabled, but ${VERTEX_API_KEY_ENV} is not configured.`);
+  const aiBackend = process.env[AI_BACKEND_ENV] || "vertex";
+
+  if (AI_FEATURES_ENABLED && aiBackend === "gemini-api" && !process.env[VERTEX_API_KEY_ENV]) {
+    throw new Error(`Production AI is enabled in gemini-api mode, but ${VERTEX_API_KEY_ENV} is not configured.`);
   }
 }
 
