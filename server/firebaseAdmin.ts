@@ -154,24 +154,37 @@ export async function reserveDailyUsage(
   const db = getFirestore(getAdminApp());
   const ref = db.collection("users").doc(uid).collection("usageDaily").doc(dateKey);
 
-  await db.runTransaction(async (transaction) => {
-    const snapshot = await transaction.get(ref);
-    const current = snapshot.exists ? Number(snapshot.get(field) ?? 0) : 0;
+  try {
+    await db.runTransaction(async (transaction) => {
+      const snapshot = await transaction.get(ref);
+      const current = snapshot.exists ? Number(snapshot.get(field) ?? 0) : 0;
 
-    if (current >= limit) {
-      throw quotaError(field, limit);
+      if (current >= limit) {
+        throw quotaError(field, limit);
+      }
+
+      transaction.set(
+        ref,
+        {
+          dateKey,
+          [field]: FieldValue.increment(1),
+          updatedAt: FieldValue.serverTimestamp(),
+        },
+        { merge: true },
+      );
+    });
+  } catch (error) {
+    if (isQuotaError(error)) {
+      throw error;
     }
 
-    transaction.set(
-      ref,
-      {
-        dateKey,
-        [field]: FieldValue.increment(1),
-        updatedAt: FieldValue.serverTimestamp(),
-      },
-      { merge: true },
-    );
-  });
+    console.error("Firestore usage reservation failed; using memory fallback.", {
+      uid,
+      field,
+      error: summarizeFirebaseError(error),
+    });
+    reserveMemoryUsage(uid, dateKey, field, limit);
+  }
 }
 
 export async function refundDailyUsage(
@@ -187,12 +200,21 @@ export async function refundDailyUsage(
     return;
   }
 
-  await getFirestore(getAdminApp())
-    .collection("users")
-    .doc(uid)
-    .collection("usageDaily")
-    .doc(dateKey)
-    .set({ [field]: FieldValue.increment(-1), updatedAt: FieldValue.serverTimestamp() }, { merge: true });
+  try {
+    await getFirestore(getAdminApp())
+      .collection("users")
+      .doc(uid)
+      .collection("usageDaily")
+      .doc(dateKey)
+      .set({ [field]: FieldValue.increment(-1), updatedAt: FieldValue.serverTimestamp() }, { merge: true });
+  } catch (error) {
+    console.error("Firestore usage refund failed; refunding memory fallback only.", {
+      uid,
+      field,
+      error: summarizeFirebaseError(error),
+    });
+    refundMemoryUsage(uid, dateKey, field);
+  }
 }
 
 export async function listRecipes(uid: string): Promise<SavedRecipe[]> {
@@ -232,12 +254,22 @@ export async function saveRecipe(uid: string, recipe: SavedRecipe): Promise<Save
     return recipe;
   }
 
-  await getFirestore(getAdminApp())
-    .collection("users")
-    .doc(uid)
-    .collection("recipes")
-    .doc(recipe.id)
-    .set(serializeRecipe(recipe), { merge: true });
+  try {
+    await getFirestore(getAdminApp())
+      .collection("users")
+      .doc(uid)
+      .collection("recipes")
+      .doc(recipe.id)
+      .set(serializeRecipe(recipe), { merge: true });
+  } catch (error) {
+    console.error("Firestore recipe save failed; returning memory fallback recipe.", {
+      uid,
+      recipeId: recipe.id,
+      error: summarizeFirebaseError(error),
+    });
+    const recipes = memoryRecipes.get(uid) ?? [];
+    memoryRecipes.set(uid, [recipe, ...recipes.filter((candidate) => candidate.id !== recipe.id)]);
+  }
 
   return recipe;
 }
@@ -369,6 +401,51 @@ function stripUndefined<T>(value: T): T {
   }
 
   return value;
+}
+
+function reserveMemoryUsage(
+  uid: string,
+  dateKey: string,
+  field: "recipeGenerations" | "ingredientAnalyses",
+  limit: number,
+) {
+  const key = `${uid}:${dateKey}`;
+  const usage = memoryUsage.get(key) ?? {
+    dateKey,
+    recipeGenerations: 0,
+    ingredientAnalyses: 0,
+  };
+
+  if (usage[field] >= limit) {
+    throw quotaError(field, limit);
+  }
+
+  usage[field] += 1;
+  memoryUsage.set(key, usage);
+}
+
+function refundMemoryUsage(
+  uid: string,
+  dateKey: string,
+  field: "recipeGenerations" | "ingredientAnalyses",
+) {
+  const key = `${uid}:${dateKey}`;
+  const usage = memoryUsage.get(key);
+  if (usage) usage[field] = Math.max(0, usage[field] - 1);
+}
+
+function isQuotaError(error: unknown) {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    ["recipe_quota_exceeded", "ingredient_quota_exceeded"].includes(String((error as { code?: unknown }).code))
+  );
+}
+
+function summarizeFirebaseError(error: unknown) {
+  const message = error instanceof Error ? error.message : String(error);
+  return message.length > 240 ? `${message.slice(0, 237)}...` : message;
 }
 
 function formatUsage(
