@@ -1027,6 +1027,25 @@ button:disabled {
   background: var(--brand-primary);
 }
 
+.confetti-layer {
+  position: fixed;
+  right: 0;
+  bottom: 18vh;
+  left: 0;
+  z-index: 90;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+}
+
+.confetti-piece {
+  position: absolute;
+  width: 10px;
+  height: 16px;
+  border-radius: 4px;
+  box-shadow: 0 6px 16px rgba(34, 27, 40, 0.16);
+}
+
 .home-actions[data-mode="type"],
 .home-actions[data-mode="photo"],
 .home-actions[data-ready="true"] {
@@ -3556,6 +3575,29 @@ button:disabled {
     gap: 10px;
     padding: 8px;
     border-radius: 999px;
+  }
+
+  .app-shell[data-entry-stage="home"] .inline-error {
+    position: fixed;
+    right: var(--chrome-edge);
+    bottom: calc(var(--chrome-edge) + env(safe-area-inset-bottom) + 78px);
+    left: var(--chrome-edge);
+    z-index: 21;
+    width: auto;
+    max-width: none;
+    text-align: center;
+    box-shadow: 0 16px 34px rgba(153, 27, 27, 0.16);
+  }
+
+  .photo-source-popover {
+    position: fixed;
+    right: var(--chrome-edge);
+    bottom: calc(var(--chrome-edge) + env(safe-area-inset-bottom) + 78px);
+    left: var(--chrome-edge);
+    width: auto;
+    max-width: none;
+    justify-content: center;
+    transform: none;
   }
 
   .setup-stage .setup-topline {

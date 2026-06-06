@@ -302,6 +302,7 @@ export function App() {
   const [selectedRecipeId, setSelectedRecipeId] = useState<string | null>(null);
   const [selectedRecipeSnapshot, setSelectedRecipeSnapshot] = useState<SavedRecipe | null>(null);
   const [isCookSessionExpanded, setIsCookSessionExpanded] = useState(false);
+  const [confettiBurstId, setConfettiBurstId] = useState(0);
   const [recipeFilter, setRecipeFilter] = useState<"all" | "liked">("all");
   const [appSettings, setAppSettings] = useState<AppSettings>(() =>
     typeof window === "undefined" ? { darkMode: false } : readAppSettings(),
@@ -821,6 +822,7 @@ export function App() {
       const completedAt = new Date().toISOString();
       commitSavedRecipes(markSavedRecipeComplete(savedRecipes, savedRecipe.id, completedAt));
       commitActiveCookSession(null);
+      setConfettiBurstId((current) => current + 1);
 
       if (appConfig.authRequired) {
         try {
@@ -933,6 +935,7 @@ export function App() {
       data-mobile-nav-open={isMobileNavOpen}
       data-entry-stage={activeIndex === 0 ? entryStage : undefined}
     >
+      <ConfettiBurst burstId={confettiBurstId} />
       <AmbientBackground isRapid={isRapid} />
       <NavigationRail
         activeIndex={activeIndex}
@@ -1040,6 +1043,50 @@ function AmbientBackground({ isRapid }: { isRapid: boolean }) {
       <GradientSpot index={1} isRapid={isRapid} color="var(--spot-two)" size="48vw" />
       <GradientSpot index={2} isRapid={isRapid} color="var(--spot-three)" size="42vw" />
     </div>
+  );
+}
+
+function ConfettiBurst({ burstId }: { burstId: number }) {
+  if (burstId === 0) {
+    return null;
+  }
+
+  const colors = ["#ff6321", "#9333ea", "#f59e0b", "#22c55e", "#2563eb"];
+  const pieces = Array.from({ length: 28 }, (_, index) => ({
+    id: `${burstId}-${index}`,
+    x: (index - 14) * 11 + (index % 4) * 7,
+    y: -120 - (index % 6) * 22,
+    rotate: index * 41,
+    color: colors[index % colors.length],
+  }));
+
+  return (
+    <motion.div
+      key={burstId}
+      className="confetti-layer"
+      aria-label="Recipe completed"
+      role="status"
+      initial={{ opacity: 1 }}
+      animate={{ opacity: 0 }}
+      transition={{ delay: 1.1, duration: 0.35 }}
+    >
+      {pieces.map((piece) => (
+        <motion.span
+          key={piece.id}
+          className="confetti-piece"
+          style={{ background: piece.color }}
+          initial={{ x: 0, y: 0, opacity: 1, rotate: 0, scale: 0.8 }}
+          animate={{
+            x: piece.x,
+            y: piece.y,
+            opacity: [1, 1, 0],
+            rotate: piece.rotate,
+            scale: [0.8, 1, 0.9],
+          }}
+          transition={{ duration: 1.35, ease: "easeOut" }}
+        />
+      ))}
+    </motion.div>
   );
 }
 
