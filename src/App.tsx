@@ -7,7 +7,6 @@ import {
   Check,
   ChefHat,
   ChevronDown,
-  ChevronUp,
   Crown,
   Egg,
   Flame,
@@ -1681,6 +1680,7 @@ function HomeLauncher({
   const hasComposerContent = Boolean(typedIngredientText.trim()) || composerImages.length > 0;
   const canContinue = selectedCount > 0 || hasComposerContent;
   const hasChipOnlyIntent = homeInputMode === "idle" && selectedCount > 0;
+  const showIngredientProcessing = isPhotoLoading && hasComposerContent;
   const handlePhotoFiles = (files: FileList | null) => {
     const remainingSlots = Math.max(0, 3 - composerImages.length);
     Array.from(files ?? [])
@@ -1757,11 +1757,25 @@ function HomeLauncher({
           className="home-actions"
           data-mode={homeInputMode}
           data-ready={hasChipOnlyIntent}
+          data-processing={showIngredientProcessing}
           layout
           transition={MORPH_SPRING}
         >
           <>
-            {homeInputMode === "type" ? (
+            {showIngredientProcessing ? (
+              <motion.div
+                className="ingredient-processing-pill"
+                key="ingredient-processing"
+                layout
+                initial={{ opacity: 0, scale: 0.94, y: 8 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.94, y: 8 }}
+                transition={MORPH_SPRING}
+              >
+                <Sparkles size={20} aria-hidden="true" />
+                <span>Processing Ingredients...</span>
+              </motion.div>
+            ) : homeInputMode === "type" ? (
               <motion.div
                 className="composer-card text-composer"
                 key="type-composer"
@@ -3088,52 +3102,43 @@ function CookSessionPanel({
               <h2>{savedRecipe.recipe.recipeName}</h2>
               <small>{phaseStatus}</small>
             </motion.div>
-            <motion.div className="cook-panel-actions">
-              <AnimatePresence initial={false} mode="popLayout">
-                {isExpanded && (
+            <AnimatePresence initial={false}>
+              {isExpanded && (
+                <motion.div
+                  className="cook-panel-actions"
+                  key="expanded-cook-actions"
+                  initial={{ opacity: 0, scale: 0.92, x: 10 }}
+                  animate={{ opacity: 1, scale: 1, x: 0 }}
+                  exit={{ opacity: 0, scale: 0.92, x: 10 }}
+                  transition={SOFT_SPRING}
+                >
                   <motion.span
                     className="count-pill"
                     key="cook-count"
                     layout
-                    initial={{ opacity: 0, scale: 0.76, x: 12 }}
-                    animate={{ opacity: 1, scale: 1, x: 0 }}
-                    exit={{ opacity: 0, scale: 0.76, x: 12 }}
                     transition={SOFT_SPRING}
                   >
                     {isIngredientsPhase ? `${checkedCount}/${rows.length}` : `${checkedStepCount}/${savedRecipe.recipe.steps.length}`}
                   </motion.span>
-                )}
-              </AnimatePresence>
-              <button
-                className="cook-icon-button"
-                type="button"
-                aria-label={isExpanded ? "Collapse cooking plan" : "Expand cooking plan"}
-                onClick={onToggleExpanded}
-              >
-                {isExpanded ? <ChevronDown size={22} aria-hidden="true" /> : <ChevronUp size={22} aria-hidden="true" />}
-              </button>
-              <AnimatePresence initial={false}>
-                {isExpanded && (
-                  <motion.span
-                    key="cook-unpin"
-                    layout
-                    initial={{ opacity: 0, scale: 0.76, rotate: -18 }}
-                    animate={{ opacity: 1, scale: 1, rotate: 0 }}
-                    exit={{ opacity: 0, scale: 0.76, rotate: -18 }}
-                    transition={SOFT_SPRING}
+                  <button
+                    className="cook-icon-button"
+                    type="button"
+                    aria-label="Collapse cooking plan"
+                    onClick={onToggleExpanded}
                   >
-                    <button
-                      className="cook-icon-button danger"
-                      type="button"
-                      aria-label="Unpin recipe"
-                      onClick={onUnpin}
-                    >
-                      <PinOff size={19} aria-hidden="true" />
-                    </button>
-                  </motion.span>
-                )}
-              </AnimatePresence>
-            </motion.div>
+                    <ChevronDown size={20} aria-hidden="true" />
+                  </button>
+                  <button
+                    className="cook-icon-button danger"
+                    type="button"
+                    aria-label="Unpin recipe"
+                    onClick={onUnpin}
+                  >
+                    <PinOff size={18} aria-hidden="true" />
+                  </button>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </motion.div>
 
           <AnimatePresence initial={false} mode="popLayout">
