@@ -3,8 +3,12 @@ import type { SavedRecipe } from "../shared/recipe";
 import {
   ACTIVE_COOK_SESSION_KEY,
   APP_SETTINGS_KEY,
+  LATE_MONTH_PLAN_KEY,
+  PANTRY_MEMORY_KEY,
   SAVED_RECIPES_KEY,
   clearActiveCookSession,
+  readLateMonthPlan,
+  readPantryMemory,
   markSavedRecipeComplete,
   readAppSettings,
   readActiveCookSession,
@@ -13,6 +17,8 @@ import {
   upsertSavedRecipe,
   writeActiveCookSession,
   writeAppSettings,
+  writeLateMonthPlan,
+  writePantryMemory,
   writeSavedRecipes,
 } from "../src/lib/storage";
 
@@ -208,5 +214,29 @@ describe("saved recipe storage", () => {
 
     expect(storage.getItem(APP_SETTINGS_KEY)).toContain("darkMode");
     expect(readAppSettings(storage)).toEqual({ darkMode: true });
+  });
+
+  it("persists pantry memory and late-month planning preferences", () => {
+    const storage = createMemoryStorage();
+
+    expect(readPantryMemory(storage)).toEqual({
+      enabled: true,
+      staples: { carbs: [], proteins: [], veggies: [], condiments: [] },
+    });
+    expect(readLateMonthPlan(storage)).toEqual({ enabled: false, days: 5, budget: 30000 });
+
+    writePantryMemory(
+      {
+        enabled: true,
+        staples: { carbs: ["Nasi"], proteins: ["Telur"], veggies: [], condiments: ["Kecap"] },
+      },
+      storage,
+    );
+    writeLateMonthPlan({ enabled: true, days: 7, budget: 49000 }, storage);
+
+    expect(storage.getItem(PANTRY_MEMORY_KEY)).toContain("Telur");
+    expect(storage.getItem(LATE_MONTH_PLAN_KEY)).toContain("49000");
+    expect(readPantryMemory(storage).staples.proteins).toEqual(["Telur"]);
+    expect(readLateMonthPlan(storage)).toEqual({ enabled: true, days: 7, budget: 49000 });
   });
 });

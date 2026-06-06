@@ -253,6 +253,8 @@ button:disabled {
 .app-shell[data-color-scheme="dark"] .settings-card,
 .app-shell[data-color-scheme="dark"] .budget-panel,
 .app-shell[data-color-scheme="dark"] .pantry-matrix-panel,
+.app-shell[data-color-scheme="dark"] .pantry-memory-panel,
+.app-shell[data-color-scheme="dark"] .late-month-panel,
 .app-shell[data-color-scheme="dark"] .vibe-panel {
   background: rgba(20, 15, 27, 0.76);
 }
@@ -1463,6 +1465,7 @@ button:disabled {
   align-items: start;
 }
 
+.setup-left-stack,
 .setup-side-stack {
   display: grid;
   gap: 18px;
@@ -1502,8 +1505,10 @@ button:disabled {
 }
 
 .pantry-matrix-panel,
+.pantry-memory-panel,
 .budget-panel,
-.vibe-panel {
+.vibe-panel,
+.late-month-panel {
   padding: 26px;
 }
 
@@ -1650,6 +1655,81 @@ button:disabled {
   color: #fff;
   background: #dc2626;
   transform: scale(1.04);
+}
+
+.pantry-memory-panel p:not(.mono-label),
+.late-month-panel p:not(.mono-label) {
+  margin: 8px 0 0;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.settings-toggle.compact {
+  min-width: 72px;
+  min-height: 42px;
+  padding: 0 14px;
+}
+
+.memory-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.memory-chip-row span,
+.settings-memory-list button {
+  min-height: 32px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 12px;
+  border: 1px solid var(--brand-border);
+  border-radius: 999px;
+  color: var(--brand-primary);
+  background: var(--surface-strong);
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 13px;
+}
+
+.settings-memory-list button {
+  cursor: pointer;
+}
+
+.feature-action-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.late-plan-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin: 16px 0;
+}
+
+.late-plan-grid label {
+  display: grid;
+  gap: 6px;
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+}
+
+.late-plan-grid input {
+  min-width: 0;
+  height: 46px;
+  border: 1px solid var(--brand-border);
+  border-radius: 18px;
+  padding: 0 12px;
+  color: var(--text);
+  background: var(--surface-strong);
+  font-family: var(--font-display);
+  font-weight: 800;
 }
 
 .ghost-action,
@@ -2742,6 +2822,11 @@ button:disabled {
   gap: 12px;
 }
 
+.ingredient-preview-stack {
+  display: grid;
+  gap: 8px;
+}
+
 .ingredient-preview-panel {
   padding: 26px;
 }
@@ -2778,6 +2863,42 @@ button:disabled {
     border-color 170ms ease,
     background 170ms ease,
     transform 170ms ease;
+}
+
+.ingredient-preview-row {
+  grid-template-columns: 34px minmax(0, 1fr) auto auto;
+}
+
+.swap-helper-button {
+  min-height: 34px;
+  border: 1px solid var(--brand-border);
+  border-radius: 999px;
+  padding: 0 12px;
+  color: var(--brand-primary);
+  background: var(--surface-strong);
+  font-family: var(--font-display);
+  font-weight: 800;
+}
+
+.swap-helper-button[aria-expanded="true"],
+.swap-helper-button:hover {
+  color: #fff;
+  background: var(--brand-primary);
+}
+
+.substitution-panel {
+  overflow: hidden;
+  padding: 14px;
+  border: 1px dashed var(--brand-border);
+  border-radius: 22px;
+  background: var(--surface-muted);
+}
+
+.substitution-panel small {
+  display: block;
+  margin-top: 10px;
+  color: var(--muted);
+  line-height: 1.5;
 }
 
 .ingredient-preview-row span:nth-child(2),
@@ -3751,6 +3872,7 @@ button:disabled {
     gap: 14px;
   }
 
+  .setup-left-stack,
   .setup-side-stack {
     gap: 14px;
   }
@@ -3870,13 +3992,25 @@ button:disabled {
   .warung-row,
   .ingredient-preview-row,
   .cook-check-row {
-    grid-template-columns: 34px minmax(0, 1fr);
+    grid-template-columns: 34px minmax(0, 1fr) auto;
     border-radius: 24px;
   }
 
   .warung-cost {
     grid-column: 2;
     justify-self: start;
+  }
+
+  .swap-helper-button {
+    grid-column: 3;
+    grid-row: 1 / span 2;
+    min-height: 32px;
+    padding: 0 10px;
+    font-size: 12px;
+  }
+
+  .late-plan-grid {
+    grid-template-columns: 1fr;
   }
 
   .cook-session-panel {

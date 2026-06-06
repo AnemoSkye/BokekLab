@@ -13,6 +13,8 @@ import { parseStructuredRecipe } from "../../shared/recipeParsing";
 export const SAVED_RECIPES_KEY = "bokeklab.savedRecipes.v1";
 export const ACTIVE_COOK_SESSION_KEY = "bokeklab.activeCookSession.v1";
 export const APP_SETTINGS_KEY = "bokeklab.settings.v1";
+export const PANTRY_MEMORY_KEY = "bokeklab.pantryMemory.v1";
+export const LATE_MONTH_PLAN_KEY = "bokeklab.lateMonthPlan.v1";
 
 type StorageLike = Pick<Storage, "getItem" | "setItem" | "removeItem">;
 
@@ -22,6 +24,38 @@ const appSettingsSchema = z.object({
 });
 
 export type AppSettings = z.infer<typeof appSettingsSchema>;
+export type PantryMemoryState = {
+  enabled: boolean;
+  staples: GenerateRecipeRequest["pantryMatrix"];
+};
+export type LateMonthPlanState = {
+  enabled: boolean;
+  days: number;
+  budget: number;
+};
+
+const pantryMatrixSchema = z.object({
+  carbs: z.array(z.string()).default([]),
+  proteins: z.array(z.string()).default([]),
+  veggies: z.array(z.string()).default([]),
+  condiments: z.array(z.string()).default([]),
+});
+
+const pantryMemorySchema = z.object({
+  enabled: z.boolean().default(true),
+  staples: pantryMatrixSchema.default({
+    carbs: [],
+    proteins: [],
+    veggies: [],
+    condiments: [],
+  }),
+});
+
+const lateMonthPlanSchema = z.object({
+  enabled: z.boolean().default(false),
+  days: z.number().int().min(1).max(14).default(5),
+  budget: z.number().int().min(0).max(250000).default(30000),
+});
 
 const CATEGORY_LABELS = {
   carbs: "karbohidrat",
@@ -61,6 +95,54 @@ export function writeSavedRecipes(
 
 export function clearSavedRecipes(storage: StorageLike = window.localStorage) {
   storage.removeItem(SAVED_RECIPES_KEY);
+}
+
+export function readPantryMemory(storage: StorageLike = window.localStorage): PantryMemoryState {
+  const raw = storage.getItem(PANTRY_MEMORY_KEY);
+
+  if (!raw) {
+    return {
+      enabled: true,
+      staples: { carbs: [], proteins: [], veggies: [], condiments: [] },
+    };
+  }
+
+  try {
+    return pantryMemorySchema.parse(JSON.parse(raw));
+  } catch {
+    return {
+      enabled: true,
+      staples: { carbs: [], proteins: [], veggies: [], condiments: [] },
+    };
+  }
+}
+
+export function writePantryMemory(
+  memory: PantryMemoryState,
+  storage: StorageLike = window.localStorage,
+) {
+  storage.setItem(PANTRY_MEMORY_KEY, JSON.stringify(memory));
+}
+
+export function readLateMonthPlan(storage: StorageLike = window.localStorage): LateMonthPlanState {
+  const raw = storage.getItem(LATE_MONTH_PLAN_KEY);
+
+  if (!raw) {
+    return { enabled: false, days: 5, budget: 30000 };
+  }
+
+  try {
+    return lateMonthPlanSchema.parse(JSON.parse(raw));
+  } catch {
+    return { enabled: false, days: 5, budget: 30000 };
+  }
+}
+
+export function writeLateMonthPlan(
+  plan: LateMonthPlanState,
+  storage: StorageLike = window.localStorage,
+) {
+  storage.setItem(LATE_MONTH_PLAN_KEY, JSON.stringify(plan));
 }
 
 export function removeSavedRecipe(

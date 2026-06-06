@@ -102,12 +102,18 @@ import {
   normalizeSavedRecipe,
   readAppSettings,
   readActiveCookSession,
+  readLateMonthPlan,
+  readPantryMemory,
   readSavedRecipes,
   removeSavedRecipe,
   upsertSavedRecipe,
   writeAppSettings,
   type AppSettings,
+  type LateMonthPlanState,
+  type PantryMemoryState,
   writeActiveCookSession,
+  writeLateMonthPlan,
+  writePantryMemory,
   writeSavedRecipes,
 } from "./lib/storage";
 import { type NavIndex, resolveThemeMode, shouldUseRapidSpots } from "./lib/theme";
@@ -208,6 +214,45 @@ function removeIngredient(matrix: PantryMatrix, item: string): PantryMatrix {
   };
 }
 
+function pantryItemCount(matrix: PantryMatrix) {
+  return countIngredients(matrix);
+}
+
+function normalizeIngredientName(item: string) {
+  return item.toLowerCase().replace(/[^a-z0-9\u00c0-\u024f\s]/gi, "").replace(/\s+/g, " ").trim();
+}
+
+function removeMemoryIngredient(memory: PantryMemoryState, item: string): PantryMemoryState {
+  return {
+    ...memory,
+    staples: removeIngredient(memory.staples, item),
+  };
+}
+
+function getSubstitutionSuggestions(ingredient: RecipeIngredient) {
+  const item = normalizeIngredientName(ingredient.item);
+  const categorySuggestions: Record<RecipeIngredient["category"], string[]> = {
+    carbs: ["Nasi sisa 1 piring", "Mie bihun 1 keping", "Roti tawar 2 lembar", "Kentang rebus 1 buah sedang"],
+    proteins: ["Telur 1 butir", "Tempe 80 g", "Tahu 2 kotak kecil", "Sarden 1/2 kaleng"],
+    veggies: ["Sawi 1 genggam", "Kol iris 1 genggam", "Kangkung 1 ikat kecil", "Tomat 1 buah"],
+    condiments: ["Kecap manis 1 sachet", "Saus sambal 1 sdm", "Bawang putih 2 siung", "Cabai rawit 3 buah"],
+    warung: ["Telur 1 butir", "Tempe 80 g", "Tahu 2 kotak kecil", "Kerupuk 1 genggam"],
+  };
+
+  const specificSuggestions: Array<[RegExp, string[]]> = [
+    [/telur/, ["Tempe 80 g", "Tahu 2 kotak kecil", "Sarden 1/2 kaleng"]],
+    [/tempe/, ["Tahu 2 kotak kecil", "Telur 1 butir", "Sarden 1/2 kaleng"]],
+    [/tahu/, ["Tempe 80 g", "Telur 1 butir", "Bakso 3 butir iris"]],
+    [/ayam/, ["Telur 1 butir", "Tempe 100 g", "Tahu 2 kotak kecil"]],
+    [/nasi/, ["Mie bihun 1 keping", "Roti tawar 2 lembar", "Kentang 1 buah sedang"]],
+    [/bihun|mie/, ["Nasi sisa 1 piring", "Roti tawar 2 lembar", "Kentang rebus 1 buah sedang"]],
+    [/kecap/, ["Saus tiram 1 sdt", "Garam 1/4 sdt + gula 1/2 sdt", "Saus sambal 1 sdm"]],
+    [/cabai|cabe/, ["Saus sambal 1 sdm", "Lada bubuk 1/4 sdt", "Boncabe 1/2 sachet"]],
+  ];
+
+  return specificSuggestions.find(([pattern]) => pattern.test(item))?.[1] ?? categorySuggestions[ingredient.category];
+}
+
 function isSupportedPhotoMimeType(mimeType: string): mimeType is IngredientPhotoRequest["mimeType"] {
   return ingredientPhotoMimeTypeSchema.safeParse(mimeType).success;
 }
@@ -305,6 +350,16 @@ export function App() {
   const [recipeFilter, setRecipeFilter] = useState<"all" | "liked">("all");
   const [appSettings, setAppSettings] = useState<AppSettings>(() =>
     typeof window === "undefined" ? { darkMode: false } : readAppSettings(),
+  );
+  const [pantryMemory, setPantryMemory] = useState<PantryMemoryState>(() =>
+    typeof window === "undefined"
+      ? { enabled: true, staples: emptyPantryMatrix }
+      : readPantryMemory(),
+  );
+  const [lateMonthPlan, setLateMonthPlan] = useState<LateMonthPlanState>(() =>
+    typeof window === "undefined"
+      ? { enabled: false, days: 5, budget: 30000 }
+      : readLateMonthPlan(),
   );
   const [savedRecipes, setSavedRecipes] = useState<SavedRecipe[]>(() =>
     typeof window === "undefined" ? [] : readSavedRecipes(),
@@ -868,6 +923,39 @@ export function App() {
     writeAppSettings(nextSettings);
   }
 
+  function handlePantryMemoryChange(nextMemory: PantryMemoryState) {
+    setPantryMemory(nextMemory);
+    writePantryMemory(nextMemory);
+  }
+
+  function handleSavePantryMemory() {
+    const nextMemory = {
+      ...pantryMemory,
+      staples: mergePantryMatrix(pantryMemory.staples, pantryMatrix),
+    };
+
+    handlePantryMemoryChange(nextMemory);
+  }
+
+  function handleApplyPantryMemory() {
+    setPantryMatrix((current) => mergePantryMatrix(current, pantryMemory.staples));
+    setEntryStage("setup");
+  }
+
+  function handleRemoveMemoryIngredient(item: string) {
+    handlePantryMemoryChange(removeMemoryIngredient(pantryMemory, item));
+  }
+
+  function handleLateMonthPlanChange(nextPlan: LateMonthPlanState) {
+    setLateMonthPlan(nextPlan);
+    writeLateMonthPlan(nextPlan);
+  }
+
+  function handleUseLateMonthBudget() {
+    const dailyBudget = Math.floor(lateMonthPlan.budget / Math.max(1, lateMonthPlan.days));
+    setSisaDompet(Math.min(dailyBudget, budgetMode === "sultan" ? SULTAN_BUDGET_MAX : NORMAL_BUDGET_MAX));
+  }
+
   function handleRetryGeneration() {
     if (frozenPayload) {
       void generateFromPayload(frozenPayload);
@@ -963,6 +1051,8 @@ export function App() {
               sisaDompet={sisaDompet}
               budgetMode={budgetMode}
               pantryMatrix={pantryMatrix}
+              pantryMemory={pantryMemory}
+              lateMonthPlan={lateMonthPlan}
               vibeProfile={vibeProfile}
               selectedCount={selectedCount}
               isGenerating={status === "loading"}
@@ -977,6 +1067,11 @@ export function App() {
               onToggleIngredient={handleToggleIngredient}
               onRemoveIngredient={handleRemoveIngredient}
               onGenerate={() => void generateFromPayload(payload)}
+              onApplyPantryMemory={handleApplyPantryMemory}
+              onSavePantryMemory={handleSavePantryMemory}
+              onPantryMemoryChange={handlePantryMemoryChange}
+              onLateMonthPlanChange={handleLateMonthPlanChange}
+              onUseLateMonthBudget={handleUseLateMonthBudget}
               onType={handleActivateTypeMode}
               onTypedTextChange={setTypedIngredientText}
               onContinue={handleContinueSetup}
@@ -1024,7 +1119,12 @@ export function App() {
               authUser={authUser}
               usageToday={usageToday}
               savedRecipeCount={savedRecipes.length}
+              pantryMemory={pantryMemory}
+              lateMonthPlan={lateMonthPlan}
               onSettingsChange={handleSettingsChange}
+              onPantryMemoryChange={handlePantryMemoryChange}
+              onRemoveMemoryIngredient={handleRemoveMemoryIngredient}
+              onLateMonthPlanChange={handleLateMonthPlanChange}
               onWipeRecipes={handleWipeRecipes}
               onSignOut={() => void handleSignOut()}
             />
@@ -1543,6 +1643,8 @@ function DapurDarurat({
   sisaDompet,
   budgetMode,
   pantryMatrix,
+  pantryMemory,
+  lateMonthPlan,
   vibeProfile,
   selectedCount,
   isGenerating,
@@ -1557,6 +1659,11 @@ function DapurDarurat({
   onToggleIngredient,
   onRemoveIngredient,
   onGenerate,
+  onApplyPantryMemory,
+  onSavePantryMemory,
+  onPantryMemoryChange,
+  onLateMonthPlanChange,
+  onUseLateMonthBudget,
   onType,
   onTypedTextChange,
   onContinue,
@@ -1571,6 +1678,8 @@ function DapurDarurat({
   sisaDompet: number;
   budgetMode: BudgetMode;
   pantryMatrix: PantryMatrix;
+  pantryMemory: PantryMemoryState;
+  lateMonthPlan: LateMonthPlanState;
   vibeProfile: VibeProfile;
   selectedCount: number;
   isGenerating: boolean;
@@ -1585,6 +1694,11 @@ function DapurDarurat({
   onToggleIngredient: (groupKey: keyof PantryMatrix, item: string) => void;
   onRemoveIngredient: (item: string) => void;
   onGenerate: () => void;
+  onApplyPantryMemory: () => void;
+  onSavePantryMemory: () => void;
+  onPantryMemoryChange: (memory: PantryMemoryState) => void;
+  onLateMonthPlanChange: (plan: LateMonthPlanState) => void;
+  onUseLateMonthBudget: () => void;
   onType: () => void;
   onTypedTextChange: (value: string) => void;
   onContinue: () => void;
@@ -1625,6 +1739,8 @@ function DapurDarurat({
           sisaDompet={sisaDompet}
           budgetMode={budgetMode}
           pantryMatrix={pantryMatrix}
+          pantryMemory={pantryMemory}
+          lateMonthPlan={lateMonthPlan}
           vibeProfile={vibeProfile}
           selectedCount={selectedCount}
           isGenerating={isGenerating}
@@ -1633,6 +1749,11 @@ function DapurDarurat({
           onVibeChange={onVibeChange}
           onRemoveIngredient={onRemoveIngredient}
           onGenerate={onGenerate}
+          onApplyPantryMemory={onApplyPantryMemory}
+          onSavePantryMemory={onSavePantryMemory}
+          onPantryMemoryChange={onPantryMemoryChange}
+          onLateMonthPlanChange={onLateMonthPlanChange}
+          onUseLateMonthBudget={onUseLateMonthBudget}
           onBackHome={onBackHome}
           onClearPantry={onClearPantry}
           onToggleSultanMode={onToggleSultanMode}
@@ -2026,6 +2147,8 @@ function PantrySetup({
   sisaDompet,
   budgetMode,
   pantryMatrix,
+  pantryMemory,
+  lateMonthPlan,
   vibeProfile,
   selectedCount,
   isGenerating,
@@ -2034,6 +2157,11 @@ function PantrySetup({
   onVibeChange,
   onRemoveIngredient,
   onGenerate,
+  onApplyPantryMemory,
+  onSavePantryMemory,
+  onPantryMemoryChange,
+  onLateMonthPlanChange,
+  onUseLateMonthBudget,
   onBackHome,
   onClearPantry,
   onToggleSultanMode,
@@ -2041,6 +2169,8 @@ function PantrySetup({
   sisaDompet: number;
   budgetMode: BudgetMode;
   pantryMatrix: PantryMatrix;
+  pantryMemory: PantryMemoryState;
+  lateMonthPlan: LateMonthPlanState;
   vibeProfile: VibeProfile;
   selectedCount: number;
   isGenerating: boolean;
@@ -2049,6 +2179,11 @@ function PantrySetup({
   onVibeChange: (value: VibeProfile) => void;
   onRemoveIngredient: (item: string) => void;
   onGenerate: () => void;
+  onApplyPantryMemory: () => void;
+  onSavePantryMemory: () => void;
+  onPantryMemoryChange: (memory: PantryMemoryState) => void;
+  onLateMonthPlanChange: (plan: LateMonthPlanState) => void;
+  onUseLateMonthBudget: () => void;
   onBackHome: () => void;
   onClearPantry: () => void;
   onToggleSultanMode: () => void;
@@ -2071,12 +2206,21 @@ function PantrySetup({
       </div>
 
       <div className="setup-grid">
-        <PantryMatrixPanel
-          pantryMatrix={pantryMatrix}
-          selectedCount={selectedCount}
-          onRemoveIngredient={onRemoveIngredient}
-          onClearPantry={onClearPantry}
-        />
+        <div className="setup-left-stack">
+          <PantryMatrixPanel
+            pantryMatrix={pantryMatrix}
+            selectedCount={selectedCount}
+            onRemoveIngredient={onRemoveIngredient}
+            onClearPantry={onClearPantry}
+          />
+          <PantryMemoryPanel
+            memory={pantryMemory}
+            selectedCount={selectedCount}
+            onApply={onApplyPantryMemory}
+            onSave={onSavePantryMemory}
+            onChange={onPantryMemoryChange}
+          />
+        </div>
         <div className="setup-side-stack">
           <BudgetPanel
             value={sisaDompet}
@@ -2085,6 +2229,11 @@ function PantrySetup({
             onToggleSultanMode={onToggleSultanMode}
           />
           <VibePanel budgetMode={budgetMode} value={vibeProfile} onChange={onVibeChange} />
+          <LateMonthPlanPanel
+            plan={lateMonthPlan}
+            onChange={onLateMonthPlanChange}
+            onUseDailyBudget={onUseLateMonthBudget}
+          />
         </div>
       </div>
 
@@ -2162,6 +2311,149 @@ function PantryMatrixPanel({
       >
         <X size={16} aria-hidden="true" />
         Kosongkan pantry
+      </ActionButton>
+    </section>
+  );
+}
+
+function PantryMemoryPanel({
+  memory,
+  selectedCount,
+  onApply,
+  onSave,
+  onChange,
+}: {
+  memory: PantryMemoryState;
+  selectedCount: number;
+  onApply: () => void;
+  onSave: () => void;
+  onChange: (memory: PantryMemoryState) => void;
+}) {
+  const memoryCount = pantryItemCount(memory.staples);
+  const previewItems = pantryGroups.flatMap((group) => memory.staples[group.key]).slice(0, 6);
+
+  return (
+    <section className="m3-card pantry-memory-panel">
+      <div className="panel-heading">
+        <div>
+          <p className="mono-label">Pantry Memory</p>
+          <h2>Dapur yang selalu ada</h2>
+          <p>Simpen bahan langganan biar input berikutnya nggak mulai dari nol.</p>
+        </div>
+        <button
+          className="settings-toggle compact"
+          type="button"
+          data-active={memory.enabled}
+          aria-pressed={memory.enabled}
+          aria-label="Toggle Pantry Memory"
+          onClick={() => onChange({ ...memory, enabled: !memory.enabled })}
+        >
+          {memory.enabled ? "On" : "Off"}
+        </button>
+      </div>
+      <div className="memory-chip-row" aria-label="Bahan Pantry Memory">
+        {previewItems.length > 0 ? (
+          previewItems.map((item) => <span key={item}>{item}</span>)
+        ) : (
+          <span className="empty-token">Belum ada bahan memori.</span>
+        )}
+      </div>
+      <div className="feature-action-row">
+        <ActionButton
+          className="secondary-button"
+          type="button"
+          aria-label="Apply Pantry Memory"
+          tooltip="Tambahkan bahan memori ke Pantry Matrix"
+          disabled={!memory.enabled || memoryCount === 0}
+          onClick={onApply}
+        >
+          <ArchiveRestore size={17} aria-hidden="true" />
+          Pakai memori
+        </ActionButton>
+        <ActionButton
+          className="ghost-action"
+          type="button"
+          aria-label="Save current pantry to memory"
+          tooltip="Simpan bahan saat ini ke Pantry Memory"
+          disabled={selectedCount === 0}
+          onClick={onSave}
+        >
+          <Plus size={17} aria-hidden="true" />
+          Simpan pantry
+        </ActionButton>
+      </div>
+    </section>
+  );
+}
+
+function LateMonthPlanPanel({
+  plan,
+  onChange,
+  onUseDailyBudget,
+}: {
+  plan: LateMonthPlanState;
+  onChange: (plan: LateMonthPlanState) => void;
+  onUseDailyBudget: () => void;
+}) {
+  const dailyBudget = Math.floor(plan.budget / Math.max(1, plan.days));
+  const mealsPerDay = dailyBudget >= 20000 ? 2 : 1;
+
+  return (
+    <section className="m3-card late-month-panel">
+      <div className="panel-heading">
+        <div>
+          <p className="mono-label">Late Month Meal</p>
+          <h2>Rencana sampai gajian</h2>
+          <p>{formatRupiah(dailyBudget)} per hari untuk sekitar {mealsPerDay} menu hemat.</p>
+        </div>
+        <button
+          className="settings-toggle compact"
+          type="button"
+          data-active={plan.enabled}
+          aria-pressed={plan.enabled}
+          aria-label="Toggle Late Month Meal Plan"
+          onClick={() => onChange({ ...plan, enabled: !plan.enabled })}
+        >
+          {plan.enabled ? "On" : "Off"}
+        </button>
+      </div>
+      <div className="late-plan-grid">
+        <label>
+          <span>Hari tersisa</span>
+          <input
+            type="number"
+            min="1"
+            max="14"
+            value={plan.days}
+            onChange={(event) =>
+              onChange({ ...plan, days: Math.min(14, Math.max(1, Number(event.target.value) || 1)) })
+            }
+          />
+        </label>
+        <label>
+          <span>Total budget</span>
+          <input
+            type="number"
+            min="0"
+            max="250000"
+            step="1000"
+            value={plan.budget}
+            onChange={(event) =>
+              onChange({ ...plan, budget: Math.min(250000, Math.max(0, Number(event.target.value) || 0)) })
+            }
+          />
+        </label>
+      </div>
+      <ActionButton
+        className="secondary-button"
+        type="button"
+        aria-label="Use daily late-month budget"
+        tooltip="Pakai budget harian ini sebagai Sisa Dompet"
+        disabled={!plan.enabled}
+        onClick={onUseDailyBudget}
+      >
+        <Wallet size={17} aria-hidden="true" />
+        Pakai budget harian
       </ActionButton>
     </section>
   );
@@ -2511,7 +2803,12 @@ function SettingsPage({
   authUser,
   usageToday,
   savedRecipeCount,
+  pantryMemory,
+  lateMonthPlan,
   onSettingsChange,
+  onPantryMemoryChange,
+  onRemoveMemoryIngredient,
+  onLateMonthPlanChange,
   onWipeRecipes,
   onSignOut,
 }: {
@@ -2520,7 +2817,12 @@ function SettingsPage({
   authUser: AuthUserState | null;
   usageToday: UsageTodayResponse | null;
   savedRecipeCount: number;
+  pantryMemory: PantryMemoryState;
+  lateMonthPlan: LateMonthPlanState;
   onSettingsChange: (settings: AppSettings) => void;
+  onPantryMemoryChange: (memory: PantryMemoryState) => void;
+  onRemoveMemoryIngredient: (item: string) => void;
+  onLateMonthPlanChange: (plan: LateMonthPlanState) => void;
   onWipeRecipes: () => void | Promise<void>;
   onSignOut: () => void;
 }) {
@@ -2589,6 +2891,61 @@ function SettingsPage({
             </div>
           </div>
           <Sparkles size={28} aria-hidden="true" />
+        </article>
+
+        <article className="settings-card pantry-memory-settings">
+          <div>
+            <p className="mono-label">pantry memory</p>
+            <h2>{pantryItemCount(pantryMemory.staples)} bahan diingat</h2>
+            <p>Memori ini lokal di browser dulu, aman buat eksperimen branch sebelum Firestore sync.</p>
+            <div className="memory-chip-row settings-memory-list">
+              {pantryGroups.flatMap((group) => pantryMemory.staples[group.key]).length > 0 ? (
+                pantryGroups.flatMap((group) =>
+                  pantryMemory.staples[group.key].map((item) => (
+                    <button type="button" key={`${group.key}-${item}`} onClick={() => onRemoveMemoryIngredient(item)}>
+                      {item}
+                      <X size={13} aria-hidden="true" />
+                    </button>
+                  )),
+                )
+              ) : (
+                <span className="empty-token">Belum ada staples.</span>
+              )}
+            </div>
+          </div>
+          <button
+            className="settings-toggle"
+            type="button"
+            data-active={pantryMemory.enabled}
+            aria-pressed={pantryMemory.enabled}
+            aria-label="Toggle Pantry Memory"
+            onClick={() => onPantryMemoryChange({ ...pantryMemory, enabled: !pantryMemory.enabled })}
+          >
+            <span><ArchiveRestore size={17} aria-hidden="true" /></span>
+            {pantryMemory.enabled ? "On" : "Off"}
+          </button>
+        </article>
+
+        <article className="settings-card">
+          <div>
+            <p className="mono-label">late month</p>
+            <h2>{lateMonthPlan.enabled ? "Planner aktif" : "Planner nonaktif"}</h2>
+            <p>
+              {lateMonthPlan.days} hari, total {formatRupiah(lateMonthPlan.budget)}, sekitar{" "}
+              {formatRupiah(Math.floor(lateMonthPlan.budget / Math.max(1, lateMonthPlan.days)))} per hari.
+            </p>
+          </div>
+          <button
+            className="settings-toggle"
+            type="button"
+            data-active={lateMonthPlan.enabled}
+            aria-pressed={lateMonthPlan.enabled}
+            aria-label="Toggle Late Month Plan"
+            onClick={() => onLateMonthPlanChange({ ...lateMonthPlan, enabled: !lateMonthPlan.enabled })}
+          >
+            <span><Wallet size={17} aria-hidden="true" /></span>
+            {lateMonthPlan.enabled ? "On" : "Off"}
+          </button>
         </article>
 
         <article className="settings-card">
@@ -2946,6 +3303,9 @@ function RecipeImage({ recipe, compact = false }: { recipe: RecipeResponse; comp
 }
 
 function IngredientPreviewPanel({ recipe }: { recipe: RecipeResponse }) {
+  const [activeSubstitutionId, setActiveSubstitutionId] = useState<string | null>(null);
+  const rows = getRecipeIngredientRows(recipe);
+
   return (
     <section className="warung-panel ingredient-preview-panel">
       <div className="warung-heading">
@@ -2955,20 +3315,57 @@ function IngredientPreviewPanel({ recipe }: { recipe: RecipeResponse }) {
         <Store size={26} aria-hidden="true" />
       </div>
       <div className="ingredient-preview-grid">
-        {getRecipeIngredientRows(recipe).map((ingredient) => (
-          <div className="ingredient-preview-row" key={ingredient.id}>
-            <span className="ingredient-source-dot" data-source={ingredient.source} />
-            <span>
-              <strong>{ingredient.item}</strong>
-              <small>{ingredient.amountText}</small>
-            </span>
-            <span className="warung-cost">
-              {ingredient.source === "warung"
-                ? formatRupiah(ingredient.estimatedLocalCost ?? 0)
-                : "Pantry"}
-            </span>
-          </div>
-        ))}
+        {rows.map((ingredient) => {
+          const isOpen = activeSubstitutionId === ingredient.id;
+          const suggestions = getSubstitutionSuggestions(ingredient);
+
+          return (
+            <div className="ingredient-preview-stack" key={ingredient.id}>
+              <div className="ingredient-preview-row">
+                <span className="ingredient-source-dot" data-source={ingredient.source} />
+                <span>
+                  <strong>{ingredient.item}</strong>
+                  <small>{ingredient.amountText}</small>
+                </span>
+                <span className="warung-cost">
+                  {ingredient.source === "warung"
+                    ? formatRupiah(ingredient.estimatedLocalCost ?? 0)
+                    : "Pantry"}
+                </span>
+                <button
+                  className="swap-helper-button"
+                  type="button"
+                  aria-expanded={isOpen}
+                  aria-label={`Lihat pengganti ${ingredient.item}`}
+                  onClick={() => setActiveSubstitutionId(isOpen ? null : ingredient.id)}
+                >
+                  Ganti
+                </button>
+              </div>
+              <AnimatePresence initial={false}>
+                {isOpen && (
+                  <motion.div
+                    className="substitution-panel"
+                    initial={{ opacity: 0, y: -8, height: 0 }}
+                    animate={{ opacity: 1, y: 0, height: "auto" }}
+                    exit={{ opacity: 0, y: -8, height: 0 }}
+                    transition={SOFT_SPRING}
+                  >
+                    <p className="mono-label">Smart substitutions</p>
+                    <div className="memory-chip-row">
+                      {suggestions.map((suggestion) => (
+                        <span key={suggestion}>{suggestion}</span>
+                      ))}
+                    </div>
+                    <small>
+                      Pakai takaran mendekati bahan asli, lalu cek rasa sebelum lanjut masak.
+                    </small>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          );
+        })}
       </div>
     </section>
   );
@@ -3086,11 +3483,20 @@ function CookSessionPanel({
           data-expanded={isExpanded}
           data-phase={session.phase}
           layout
+          role={!isExpanded ? "button" : undefined}
+          tabIndex={!isExpanded ? 0 : undefined}
+          aria-label={!isExpanded ? "Expand cooking plan" : undefined}
           initial={{ opacity: 0, y: 18 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -14 }}
           transition={SOFT_SPRING}
           onClick={handlePanelClick}
+          onKeyDown={(event) => {
+            if (!isExpanded && (event.key === "Enter" || event.key === " ")) {
+              event.preventDefault();
+              onToggleExpanded();
+            }
+          }}
           onPointerDown={handlePanelPointerDown}
           onPointerUp={handlePanelPointerUp}
           onPointerCancel={() => {
